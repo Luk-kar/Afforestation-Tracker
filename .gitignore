@@ -1,0 +1,5 @@
+.env
+.html
+
+# for cloud private keys
+.json
