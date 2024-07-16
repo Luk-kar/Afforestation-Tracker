@@ -1,9 +1,5 @@
 # Third-party imports
 import ee
-import geemap
-
-# Local imports
-from stages.connection import establish_connection
 
 
 def get_data():
@@ -24,23 +20,13 @@ def get_data():
         "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
     }
 
-    establish_connection()
-
     print("Connection to Google Earth Engine is successful.")
 
     data = download_data(roi_coords, collection_types_args)
 
     print("data is downloaded")
 
-    # Display the acquired data (for verification)
-
-    Map = geemap.Map(center=[17.5, 0.0], zoom=5)
-    for key, layer in data.items():
-        Map.addLayer(layer, {"min": 0, "max": 1}, key.capitalize())
-
-    map_path = "output_map.html"
-    Map.save(map_path)
-    print(f"Map has been saved to {map_path}")
+    return data
 
 
 def mask_clouds(image):

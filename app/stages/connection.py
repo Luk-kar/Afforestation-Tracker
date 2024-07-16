@@ -36,12 +36,7 @@ def initialize_earth_engine(service_account, private_key):
         RuntimeError: If initialization fails.
     """
     credentials = ee.ServiceAccountCredentials(service_account, private_key)
-    try:
-        ee.Initialize(credentials)
-    except Exception as e:
-        raise RuntimeError(
-            f"Failed to initialize Earth Engine with the provided credentials: {e}"
-        )
+    ee.Initialize(credentials)
 
 
 def validate_earth_engine_connection():
@@ -74,3 +69,20 @@ def establish_connection():
     service_account, private_key = get_environment_variables()
     initialize_earth_engine(service_account, private_key)
     validate_earth_engine_connection()
+
+
+def establish_connection():
+    """Initializes Google Earth Engine with service account credentials."""
+
+    try:
+        service_account, private_key = get_environment_variables()
+        initialize_earth_engine(service_account, private_key)
+
+    except ee.EEException as e:
+        raise RuntimeError(
+            f"Connection validation failed with Earth Engine API error: {e}"
+        )
+    except Exception as e:
+        raise RuntimeError(
+            f"Connection validation failed with an unexpected error: {e}"
+        )
