@@ -6,7 +6,7 @@ from stages.connection import establish_connection
 
 # Initialize the Earth Engine module
 try:
-    establish_connection()
+    establish_connection
 except ee.EEException as e:
     st.error("Error initializing Earth Engine: {}".format(e))
 
@@ -47,9 +47,14 @@ def get_rootzone_soil_moisture(roi, start_date, end_date):
     return soil_moisture_rootzone
 
 
+def get_elevation_data(roi):
+    return ee.Image("USGS/SRTMGL1_003").clip(roi).rename("elevation")
+
+
 # Get soil moisture data
 surface_soil_moisture = get_surface_soil_moisture(roi, start_date, end_date)
 rootzone_soil_moisture = get_rootzone_soil_moisture(roi, start_date, end_date)
+elevation = get_elevation_data(roi)
 
 # Visualization parameters for moisture data
 moisture_vis_params = {
@@ -58,38 +63,55 @@ moisture_vis_params = {
     "palette": ["red", "yellow", "green", "blue"],
 }
 
+elevation_vis = {
+    "min": 0,
+    "max": 3000,
+    "palette": ["0000FF", "00FFFF", "00FF00", "FFFF00", "FF0000"],
+}
+
+
+# Generalized function to add layer to folium map
+def add_layer_to_map(map_obj, image, vis_params, layer_name):
+    try:
+        layer_url = image.getMapId(vis_params)["tile_fetcher"].url_format
+        folium.TileLayer(
+            tiles=layer_url,
+            attr="Google Earth Engine",
+            overlay=True,
+            name=layer_name,
+        ).add_to(map_obj)
+        print(f"{layer_name} layer added successfully.")
+    except Exception as e:
+        st.error(f"Failed to add {layer_name} layer: {str(e)}")
+
+
+# Get data for each layer
+surface_soil_moisture = get_surface_soil_moisture(roi, start_date, end_date)
+rootzone_soil_moisture = get_rootzone_soil_moisture(roi, start_date, end_date)
+elevation = get_elevation_data(roi)
+
+# Visualization parameters for each layer
+moisture_vis_params = {
+    "min": 0.0,
+    "max": 0.5,
+    "palette": ["red", "yellow", "green", "blue"],
+}
+
+elevation_vis_params = {
+    "min": 0,
+    "max": 3000,
+    "palette": ["0000FF", "00FFFF", "00FF00", "FFFF00", "FF0000"],
+}
+
 # Create a folium map
 m = folium.Map(location=[17.5, 0.0], zoom_start=5)
 
-# Add surface soil moisture layer to the map
-try:
-    surface_soil_moisture_url = surface_soil_moisture.getMapId(moisture_vis_params)[
-        "tile_fetcher"
-    ].url_format
-    folium.TileLayer(
-        tiles=surface_soil_moisture_url,
-        attr="Google Earth Engine",
-        overlay=True,
-        name="Surface Soil Moisture",
-    ).add_to(m)
-    print("Surface Soil Moisture layer added successfully.")
-except Exception as e:
-    st.error("Failed to add Surface Soil Moisture layer: {}".format(e))
-
-# Add rootzone soil moisture layer to the map
-try:
-    rootzone_soil_moisture_url = rootzone_soil_moisture.getMapId(moisture_vis_params)[
-        "tile_fetcher"
-    ].url_format
-    folium.TileLayer(
-        tiles=rootzone_soil_moisture_url,
-        attr="Google Earth Engine",
-        overlay=True,
-        name="Rootzone Soil Moisture",
-    ).add_to(m)
-    print("Rootzone Soil Moisture layer added successfully.")
-except Exception as e:
-    st.error("Failed to add Rootzone Soil Moisture layer: {}".format(e))
+# Add layers to the map using the generalized function
+add_layer_to_map(m, surface_soil_moisture, moisture_vis_params, "Surface Soil Moisture")
+add_layer_to_map(
+    m, rootzone_soil_moisture, moisture_vis_params, "Rootzone Soil Moisture"
+)
+add_layer_to_map(m, elevation, elevation_vis_params, "Elevation")
 
 # Add layer control to the map
 folium.LayerControl().add_to(m)
