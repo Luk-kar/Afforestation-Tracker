@@ -6,7 +6,7 @@ from stages.connection import establish_connection
 
 # Initialize the Earth Engine module
 try:
-    establish_connection
+    establish_connection()
 except ee.EEException as e:
     st.error("Error initializing Earth Engine: {}".format(e))
 
@@ -51,6 +51,21 @@ def get_elevation_data(roi):
     return ee.Image("USGS/SRTMGL1_003").clip(roi).rename("elevation")
 
 
+def get_precipitation(roi, start_date, end_date):
+    # dataset = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
+    # filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
+    # precipitation = filtered_dataset.sum().clip(roi)
+    # return precipitation
+    return (
+        ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
+        .filterDate(start_date, end_date)
+        .filterBounds(roi)
+        .map(lambda image: image.clip(roi))  # Clip each image to the ROI
+        .sum()
+        .rename("Precipitation")
+    )
+
+
 # Get soil moisture data
 surface_soil_moisture = get_surface_soil_moisture(roi, start_date, end_date)
 rootzone_soil_moisture = get_rootzone_soil_moisture(roi, start_date, end_date)
@@ -67,6 +82,23 @@ elevation_vis = {
     "min": 0,
     "max": 3000,
     "palette": ["0000FF", "00FFFF", "00FF00", "FFFF00", "FF0000"],
+}
+
+precipitation_vis_params = {
+    "min": 0,
+    "max": 3000,
+    "palette": [
+        "FFFFFF",
+        "C0C0C0",
+        "808080",
+        "404040",
+        "000000",
+        "0000FF",
+        "00FFFF",
+        "00FF00",
+        "FFFF00",
+        "FF0000",
+    ],
 }
 
 
@@ -89,6 +121,7 @@ def add_layer_to_map(map_obj, image, vis_params, layer_name):
 surface_soil_moisture = get_surface_soil_moisture(roi, start_date, end_date)
 rootzone_soil_moisture = get_rootzone_soil_moisture(roi, start_date, end_date)
 elevation = get_elevation_data(roi)
+precipitation = get_precipitation(roi, start_date, end_date)
 
 # Visualization parameters for each layer
 moisture_vis_params = {
@@ -112,6 +145,7 @@ add_layer_to_map(
     m, rootzone_soil_moisture, moisture_vis_params, "Rootzone Soil Moisture"
 )
 add_layer_to_map(m, elevation, elevation_vis_params, "Elevation")
+add_layer_to_map(m, precipitation, precipitation_vis_params, "Precipitation")
 
 # Add layer control to the map
 folium.LayerControl().add_to(m)
