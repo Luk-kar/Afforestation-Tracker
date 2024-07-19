@@ -22,7 +22,7 @@ if data:
 def get_vis_params(layer_name):
     """Return appropriate visualization parameters based on the layer type."""
     vis_params = {
-        "srtm": {
+        "elevation": {
             "min": 0,
             "max": 3000,
             "palette": ["0000FF", "00FFFF", "00FF00", "FFFF00", "FF0000"],

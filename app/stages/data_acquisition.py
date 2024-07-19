@@ -23,7 +23,7 @@ collections = {
     "sentinel2": "COPERNICUS/S2_HARMONIZED",
     "surface_soil_moisture": "NASA/SMAP/SPL4SMGP/007",
     "sm_rootzone": "NASA/SMAP/SPL4SMGP/007",
-    "srtm": "USGS/SRTMGL1_003",
+    "elevation": "USGS/SRTMGL1_003",  # srtm
     "precipitation": "UCSB-CHG/CHIRPS/PENTAD",
     "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
     "world_cover": "ESA/WorldCover/v100/2020",
@@ -62,12 +62,11 @@ def download_data(roi_dict, collections):
         ).filterBounds(roi)
         data["sm_rootzone"] = sm_rootzone_moisture.mean().select("sm_rootzone")
 
-    # Elevation data (SRTM) for slope and aspect calculations
-    if "srtm" in collections:
-        srtm = get_srtm_data(collections["srtm"], roi)
-        data["srtm"] = srtm
-        data["aspect"] = get_aspect_data(srtm)
-        data["slope"] = get_slope_data(srtm)
+    # Elevation data (SRTM) for slope calculations
+    if "elevation" in collections:
+        elevation = get_elevation_data(collections["elevation"], roi)
+        data["elevation"] = elevation
+        data["slope"] = get_slope_data(elevation)
 
     # Precipitation data (CHIRPS)
     if "precipitation" in collections:
@@ -99,21 +98,18 @@ def get_precipitation_data(collection, roi, start_date, end_date):
         ee.ImageCollection(collection)
         .filterDate(start_date, end_date)
         .filterBounds(roi)
+        .map(lambda image: image.clip(roi))  # Clip each image to the ROI
         .sum()
         .rename("Precipitation")
     )
-
-
-def get_aspect_data(srtm):
-    return ee.Terrain.aspect(srtm).rename("Aspect")
 
 
 def get_slope_data(srtm):
     return ee.Terrain.slope(srtm).rename("Slope")
 
 
-def get_srtm_data(collection, roi):
-    return ee.Image(collection).clip(roi)
+def get_elevation_data(collection, roi):
+    return ee.Image(collection).clip(roi).rename("elevation")
 
 
 def get_soil_moisture(collection, roi, start_date, end_date):
@@ -140,4 +136,4 @@ def get_world_cover_data(collection, roi):
     return ee.Image(collection).clip(roi)
 
 
-# Data structure: data["sentinel2"], data["surface_soil_moisture"], data["sm_rootzone"], data["srtm"], data["aspect"], data["slope"], data["precipitation"], data["soil_organic_carbon"], data["world_cover"]
+# Data structure: data["sentinel2"], data["surface_soil_moisture"], data["sm_rootzone"], data["elevation"], data["slope"], data["precipitation"], data["soil_organic_carbon"], data["world_cover"]
