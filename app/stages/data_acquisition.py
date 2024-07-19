@@ -140,7 +140,4 @@ def get_world_cover_data(collection, roi):
     return ee.Image(collection).clip(roi)
 
 
-# Example usage
-data = get_data()
-
 # Data structure: data["sentinel2"], data["surface_soil_moisture"], data["sm_rootzone"], data["srtm"], data["aspect"], data["slope"], data["precipitation"], data["soil_organic_carbon"], data["world_cover"]

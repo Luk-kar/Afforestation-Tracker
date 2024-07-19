@@ -45,6 +45,7 @@ def establish_connection():
     try:
         service_account, private_key = get_environment_variables()
         initialize_earth_engine(service_account, private_key)
+        print("Earth Engine initialized successfully")
         return True
 
     except ee.EEException as e:
