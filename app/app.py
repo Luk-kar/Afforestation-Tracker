@@ -22,6 +22,36 @@ def get_vis_params(layer_name):
         "default": {"min": 0, "max": 3000, "palette": ["blue", "green", "red"]},
         "precipitation": {"min": 0, "max": 300, "palette": ["white", "blue"]},
         "soil_moisture": {"min": 0, "max": 0.5, "palette": ["white", "green"]},
+        "surface_soil_moisture": {
+            "min": 0.0,
+            "max": 0.5,
+            "palette": [
+                "ffffe5",
+                "f7fcb9",
+                "d9f0a3",
+                "addd8e",
+                "78c679",
+                "41ab5d",
+                "238443",
+                "006837",
+                "004529",
+            ],
+        },
+        "sm_rootzone": {
+            "min": 0.0,
+            "max": 0.5,
+            "palette": [
+                "fff7fb",
+                "ece2f0",
+                "d0d1e6",
+                "a6bddb",
+                "67a9cf",
+                "3690c0",
+                "02818a",
+                "016c59",
+                "014636",
+            ],
+        },
         "sentinel2": {"bands": ["B4", "B3", "B2"], "min": 0, "max": 0.3},
         # Add other specific layers with their visualization parameters
     }

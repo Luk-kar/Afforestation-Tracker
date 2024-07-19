@@ -1,28 +1,29 @@
 # Third-party imports
 import ee
 
+roi_coords = {
+    "roi_coords": [[[-10.0, 15.0], [-10.0, 20.0], [10.0, 20.0], [10.0, 15.0]]],
+    "start_date": "2021-01-01",
+    "end_date": "2021-12-31",
+}
+
+collections = {
+    "sentinel2": "COPERNICUS/S2_HARMONIZED",
+    "surface_soil_moisture": "NASA/SMAP/SPL4SMGP/007",
+    "sm_rootzone": "NASA/SMAP/SPL4SMGP/007",
+    "srtm": "USGS/SRTMGL1_003",
+    "aspect": "",
+    "precipitation": "UCSB-CHG/CHIRPS/PENTAD",
+    "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
+    "ESA_WorldCover_Data": "",
+}
+
 
 def get_data():
 
-    roi_coords = {
-        "roi_coords": [[[-10.0, 15.0], [-10.0, 20.0], [10.0, 20.0], [10.0, 15.0]]],
-        "start_date": "2021-01-01",
-        "end_date": "2021-12-31",
-    }
-
-    collection_types_args = {
-        "sentinel2": "COPERNICUS/S2_HARMONIZED",
-        "soil_moisture": "NASA/SMAP/SPL4SMGP/007",
-        "srtm": "USGS/SRTMGL1_003",
-        "slope": "",
-        "aspect": "",
-        "precipitation": "UCSB-CHG/CHIRPS/PENTAD",
-        "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
-    }
-
     print("Connection to Google Earth Engine is successful.")
 
-    data = download_data(roi_coords, collection_types_args)
+    data = download_data(roi_coords, collections)
 
     print("data is downloaded")
 
@@ -50,24 +51,32 @@ def download_data(roi_dict, collections):
 
         data["sentinel2"] = get_sentinel2(collections, roi, start_date, end_date)
 
-    # Soil Moisture data
-    if "soil_moisture" in collections:
+    if "surface_soil_moisture" in collections:
+        smap_collection = ee.ImageCollection(collections["surface_soil_moisture"])
+        sm_surface_moisture = smap_collection.filterDate(
+            start_date, end_date
+        ).filterBounds(roi)
+        data["surface_soil_moisture"] = sm_surface_moisture.mean().select(
+            "sm_surface"
+        )  # Assuming 'sm_surface' is the band name
 
-        data["soil_moisture"] = get_soil_moisture(
-            collections["soil_moisture"], roi, start_date, end_date
-        )
+    if "sm_rootzone" in collections:
+        smap_collection = ee.ImageCollection(collections["sm_rootzone"])
+        sm_rootzone_moisture = smap_collection.filterDate(
+            start_date, end_date
+        ).filterBounds(roi)
+        data["sm_rootzone"] = sm_rootzone_moisture.mean().select(
+            "sm_rootzone"
+        )  # Assuming 'sm_rootzone' is the band name
 
     # Elevation data (SRTM) for slope and aspect calculations
     if "srtm" in collections:
 
         srtm = get_srtm_data(collections["srtm"], roi)
 
-        if srtm:
-            if "slope" in collections:
-                data["slope"] = get_slope_data(srtm)
+        if srtm and "aspect" in collections:
 
-            if "aspect" in collections:
-                data["aspect"] = get_aspect_data(srtm)
+            data["aspect"] = get_aspect_data(srtm)
 
     # Precipitation data (CHIRPS)
     if "precipitation" in collections:
@@ -102,10 +111,6 @@ def get_precipitation_data(collection, roi, start_date, end_date):
 
 def get_aspect_data(srtm):
     return ee.Terrain.aspect(srtm).rename("Aspect")
-
-
-def get_slope_data(srtm):
-    return ee.Terrain.slope(srtm).rename("Slope")
 
 
 def get_srtm_data(collection, roi):
