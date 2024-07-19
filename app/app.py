@@ -8,20 +8,62 @@ from stages.connection import establish_connection
 from stages.data_acquisition import get_data
 
 # Initialize the Earth Engine module
-establish_connection()
+if establish_connection():
+    print("Connection to Google Earth Engine is successful.")
 
 # Obtain data from data_acquisition.py
 data = (
     get_data()
 )  # Assuming this function returns a dictionary of ee.Image objects with keys as layer names
+if data:
+    print("Data is downloaded")
 
 
 def get_vis_params(layer_name):
     """Return appropriate visualization parameters based on the layer type."""
     vis_params = {
-        "default": {"min": 0, "max": 3000, "palette": ["blue", "green", "red"]},
-        "precipitation": {"min": 0, "max": 300, "palette": ["white", "blue"]},
-        "soil_moisture": {"min": 0, "max": 0.5, "palette": ["white", "green"]},
+        "srtm": {
+            "min": 0,
+            "max": 3000,
+            "palette": ["0000FF", "00FFFF", "00FF00", "FFFF00", "FF0000"],
+        },
+        "slope": {
+            "min": 0,
+            "max": 60,
+            "palette": ["00FFFF", "0000FF", "00FF00", "FFFF00", "FF0000"],
+        },
+        "soil_organic_carbon": {
+            "min": 0,
+            "max": 200,
+            "palette": [
+                "FFFFFF",
+                "C0C0C0",
+                "808080",
+                "404040",
+                "000000",
+                "00FF00",
+                "008000",
+                "FFFF00",
+                "FFA500",
+                "FF0000",
+            ],
+        },
+        "precipitation": {
+            "min": 0,
+            "max": 3000,
+            "palette": [
+                "FFFFFF",
+                "C0C0C0",
+                "808080",
+                "404040",
+                "000000",
+                "0000FF",
+                "00FFFF",
+                "00FF00",
+                "FFFF00",
+                "FF0000",
+            ],
+        },
         "surface_soil_moisture": {
             "min": 0.0,
             "max": 0.5,
@@ -53,9 +95,28 @@ def get_vis_params(layer_name):
             ],
         },
         "sentinel2": {"bands": ["B4", "B3", "B2"], "min": 0, "max": 0.3},
-        # Add other specific layers with their visualization parameters
+        "world_cover": {
+            "min": 10,
+            "max": 100,
+            "palette": [
+                "006400",
+                "FFBB22",
+                "FFFF4C",
+                "F096FF",
+                "FA0000",
+                "B4B4B4",
+                "F0F0F0",
+                "0064C8",
+                "0096A0",
+                "00CF75",
+                "FAE6A0",
+            ],
+        },
+        "candidate_regions": {"min": 0, "max": 1, "palette": ["red", "green"]},
     }
-    return vis_params.get(layer_name, vis_params["default"])
+    return vis_params.get(
+        layer_name, {"min": 0, "max": 3000, "palette": ["blue", "green", "red"]}
+    )
 
 
 # Create a folium map at a specified location

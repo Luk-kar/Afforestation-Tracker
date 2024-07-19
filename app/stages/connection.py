@@ -39,44 +39,13 @@ def initialize_earth_engine(service_account, private_key):
     ee.Initialize(credentials)
 
 
-def validate_earth_engine_connection():
-    """
-    Validates the connection to Google Earth Engine by attempting to retrieve metadata
-    for a commonly available dataset.
-
-    Raises:
-        RuntimeError: If the connection validation fails.
-    """
-    try:
-        # Using a simple, commonly available dataset for the test
-        test_dataset = ee.Image("USGS/SRTMGL1_003")
-        test_dataset_info = test_dataset.getInfo()  # Attempt to retrieve basic metadata
-
-    except ee.EEException as e:
-        raise RuntimeError(
-            f"Connection validation failed with Earth Engine API error: {e}"
-        )
-    except Exception as e:
-        raise RuntimeError(
-            f"Connection validation failed with an unexpected error: {e}"
-        )
-
-
-def establish_connection():
-    """
-    Main function to execute the necessary functions for Earth Engine data retrieval.
-    """
-    service_account, private_key = get_environment_variables()
-    initialize_earth_engine(service_account, private_key)
-    validate_earth_engine_connection()
-
-
 def establish_connection():
     """Initializes Google Earth Engine with service account credentials."""
 
     try:
         service_account, private_key = get_environment_variables()
         initialize_earth_engine(service_account, private_key)
+        return True
 
     except ee.EEException as e:
         raise RuntimeError(
