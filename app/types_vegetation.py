@@ -1,92 +1,99 @@
-import streamlit as st
-import folium
-from streamlit_folium import folium_static
 import ee
-
-
+import folium
+import streamlit as st
+from streamlit_folium import folium_static
 from stages.connection import establish_connection
 
-establish_connection()
+# Initialize the Earth Engine module
+try:
+    establish_connection()
+except ee.EEException as e:
+    st.error("Error initializing Earth Engine: {}".format(e))
+
+# Define the region of interest (ROI)
+roi_coords = [
+    [
+        [-17.5, 15.0],
+        [-17.5, 20.0],
+        [39.0, 20.0],
+        [43.0, 10.5],
+        [35.0, 8.0],
+        [25.0, 10.0],
+        [15.0, 8.0],
+        [-5.0, 12.0],
+        [-10.0, 13.0],
+    ]
+]
+roi = ee.Geometry.Polygon(roi_coords)
+
+# Define the date range
+start_date = "2020-01-01"
+end_date = "2020-01-10"
 
 
-def main():
-    st.title("Landcover Upscaling using Earth Engine")
-
-    # Define the geometry for the area of interest.
-    geometry = ee.Geometry.Polygon(
-        [
-            [
-                [29.972731783841393, 31.609824974226175],
-                [29.972731783841393, 30.110383818311096],
-                [32.56550522134139, 30.110383818311096],
-                [32.56550522134139, 31.609824974226175],
-                [29.972731783841393, 31.609824974226175],
-            ]
-        ]  # Ensure the polygon is closed by repeating the first point.
-    )
-
-    # Load the MODIS land cover data.
-    modis_landcover = (
-        ee.ImageCollection("MODIS/006/MCD12Q1")
-        .filterDate("2001-01-01", "2001-12-31")
-        .first()
-        .select("LC_Type1")
-        .subtract(1)
-    )  # Adjust labels to start at zero
-
-    # Visualization parameters for MODIS landcover.
-    landcover_palette = (
-        "05450a,086a10,54a708,78d203,009900,c6b044,dcd159,"
-        "dade48,fbff13,b6ff05,27ff87,c24f44,a5a5a5,ff6d4c,69fff8,f9ffa4,1c0dff"
-    )
-    vis_params = {"palette": landcover_palette, "min": 0, "max": 16}
-
-    # Load and filter Landsat data.
-    landsat = (
-        ee.ImageCollection("LANDSAT/LE07/C02/T1")
-        .filterBounds(geometry)
-        .filterDate("2000-01-01", "2001-01-01")
-    )
-
-    landsat_composite = ee.Algorithms.Landsat.simpleComposite(
-        collection=landsat, asFloat=True
-    )
-
-    # Create a training dataset by sampling the stacked images.
-    training = modis_landcover.addBands(landsat_composite).sample(
-        region=geometry, scale=30, numPixels=1000  # Explicitly define the region here.
-    )
-
-    # Train a classifier.
-    classifier = ee.Classifier.smileCart().train(
-        features=training,  # This should be an ee.FeatureCollection
-        classProperty="LC_Type1",  # Ensure this is the correct name of the label property
-    )
-
-    # Apply the classifier.
-    upsampled = landsat_composite.classify(classifier)
-
-    # Create a Folium map for visualization.
-    folium_map = folium.Map(location=[30.86, 31.27], zoom_start=8)
-    folium_map.add_ee_layer(modis_landcover, vis_params, "MODIS Landcover")
-    folium_map.add_ee_layer(upsampled, vis_params, "Upsampled Landcover")
-
-    # Display the map.
-    folium_static(folium_map)
+# Retrieve Surface Soil Moisture Data
+def get_surface_soil_moisture(roi, start_date, end_date):
+    dataset = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
+    soil_moisture_surface = filtered_dataset.select("sm_surface").mean().clip(roi)
+    return soil_moisture_surface
 
 
-def add_ee_layer(self, ee_image_object, vis_params, name):
-    map_id_dict = ee.Image(ee_image_object).getMapId(vis_params)
-    folium.raster_layers.TileLayer(
-        tiles=map_id_dict["tile_fetcher"].url_format,
-        attr="Map Data &copy; Google Earth Engine",
-        name=name,
+# Retrieve Root Zone Soil Moisture Data
+def get_rootzone_soil_moisture(roi, start_date, end_date):
+    dataset = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
+    soil_moisture_rootzone = filtered_dataset.select("sm_rootzone").mean().clip(roi)
+    return soil_moisture_rootzone
+
+
+# Get soil moisture data
+surface_soil_moisture = get_surface_soil_moisture(roi, start_date, end_date)
+rootzone_soil_moisture = get_rootzone_soil_moisture(roi, start_date, end_date)
+
+# Visualization parameters for moisture data
+moisture_vis_params = {
+    "min": 0.0,
+    "max": 0.5,
+    "palette": ["red", "yellow", "green", "blue"],
+}
+
+# Create a folium map
+m = folium.Map(location=[17.5, 0.0], zoom_start=5)
+
+# Add surface soil moisture layer to the map
+try:
+    surface_soil_moisture_url = surface_soil_moisture.getMapId(moisture_vis_params)[
+        "tile_fetcher"
+    ].url_format
+    folium.TileLayer(
+        tiles=surface_soil_moisture_url,
+        attr="Google Earth Engine",
         overlay=True,
-        control=True,
-    ).add_to(self)
+        name="Surface Soil Moisture",
+    ).add_to(m)
+    print("Surface Soil Moisture layer added successfully.")
+except Exception as e:
+    st.error("Failed to add Surface Soil Moisture layer: {}".format(e))
 
+# Add rootzone soil moisture layer to the map
+try:
+    rootzone_soil_moisture_url = rootzone_soil_moisture.getMapId(moisture_vis_params)[
+        "tile_fetcher"
+    ].url_format
+    folium.TileLayer(
+        tiles=rootzone_soil_moisture_url,
+        attr="Google Earth Engine",
+        overlay=True,
+        name="Rootzone Soil Moisture",
+    ).add_to(m)
+    print("Rootzone Soil Moisture layer added successfully.")
+except Exception as e:
+    st.error("Failed to add Rootzone Soil Moisture layer: {}".format(e))
 
-folium.Map.add_ee_layer = add_ee_layer
+# Add layer control to the map
+folium.LayerControl().add_to(m)
 
-if __name__ == "__main__":
-    main()
+# Use streamlit_folium to display the map in Streamlit
+st.title("Soil Moisture Visualization")
+folium_static(m)

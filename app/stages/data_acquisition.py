@@ -15,12 +15,12 @@ roi_coords = {
             [-10.0, 13.0],
         ]
     ],
-    "start_date": "2021-01-01",
-    "end_date": "2021-12-31",
+    "start_date": "2020-01-01",
+    "end_date": "2020-12-31",
 }
 
 collections = {
-    "sentinel2": "COPERNICUS/S2_HARMONIZED",
+    # "sentinel2": "COPERNICUS/S2_HARMONIZED",
     "surface_soil_moisture": "NASA/SMAP/SPL4SMGP/007",
     "sm_rootzone": "NASA/SMAP/SPL4SMGP/007",
     "elevation": "USGS/SRTMGL1_003",  # srtm
@@ -46,21 +46,14 @@ def download_data(roi_dict, collections):
     if "sentinel2" in collections:
         data["sentinel2"] = get_sentinel2(collections, roi, start_date, end_date)
 
-    # Surface Soil Moisture data
     if "surface_soil_moisture" in collections:
-        smap_collection = ee.ImageCollection(collections["surface_soil_moisture"])
-        sm_surface_moisture = smap_collection.filterDate(
-            start_date, end_date
-        ).filterBounds(roi)
-        data["surface_soil_moisture"] = sm_surface_moisture.mean().select("sm_surface")
+        data["surface_soil_moisture"] = get_surface_soil_moisture(
+            roi, start_date, end_date
+        )
 
     # Rootzone Soil Moisture data
     if "sm_rootzone" in collections:
-        smap_collection = ee.ImageCollection(collections["sm_rootzone"])
-        sm_rootzone_moisture = smap_collection.filterDate(
-            start_date, end_date
-        ).filterBounds(roi)
-        data["sm_rootzone"] = sm_rootzone_moisture.mean().select("sm_rootzone")
+        data["sm_rootzone"] = get_rootzone_soil_moisture(roi, start_date, end_date)
 
     # Elevation data (SRTM) for slope calculations
     if "elevation" in collections:
@@ -85,6 +78,20 @@ def download_data(roi_dict, collections):
         data["world_cover"] = get_world_cover_data(collections["world_cover"], roi)
 
     return data
+
+
+def get_surface_soil_moisture(roi, start_date, end_date):
+    dataset = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
+    soil_moisture_surface = filtered_dataset.select("sm_surface").mean().clip(roi)
+    return soil_moisture_surface
+
+
+def get_rootzone_soil_moisture(roi, start_date, end_date):
+    dataset = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
+    soil_moisture_rootzone = filtered_dataset.select("sm_rootzone").mean().clip(roi)
+    return soil_moisture_rootzone
 
 
 def get_soil_organic_carbon_data(collection, roi):
