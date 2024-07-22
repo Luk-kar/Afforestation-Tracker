@@ -217,9 +217,13 @@ def add_layer_to_map(Map, layer):
     data = layer["data"]
     vis_params = layer["vis_params"]
     name = layer["name"]
-    legend = layer.get("legend", None)
 
-    Map.addLayer(data, vis_params, name)
+    # Update the vis_params to set the opacity (if the API supports it directly)
+    # For Google Earth Engine's folium map, you can include 'opacity' as a key in vis_params.
+    updated_vis_params = vis_params.copy()  # Make a copy to avoid mutating the original
+    updated_vis_params["opacity"] = 0.6  # Set opacity to 70%
+
+    Map.addLayer(data, updated_vis_params, name)
 
 
 def calculalte_center(roi_coords):
