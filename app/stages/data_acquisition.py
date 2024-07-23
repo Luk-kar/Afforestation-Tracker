@@ -139,14 +139,12 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
 
     soilMoistureRootZone = filteredMoistureDataset.select("sm_rootzone")
     suitableSlope = slope.lt(15)
-    soc = get_soil_organic_carbon(roi_coords)
-    suitableSOC = soc.gt(20)  # Example: suitable SOC greater than 20 g/kg
-    suitableMoisture = soilMoistureRootZone.mean().gte(
-        0.1
-    )  # Suitable soil moisture greater than or equal to 10% VWC
-    goodMoisture = suitableSOC.Or(suitableMoisture)
 
-    candidateRegions = annualPrecipitation.gte(200).And(suitableSlope).And(goodMoisture)
+    suitableMoisture = soilMoistureRootZone.mean().gte(0.1)
+
+    candidateRegions = (
+        annualPrecipitation.gte(200).Or(suitableMoisture).And(suitableSlope)
+    )
 
     worldCover = get_world_cover(roi_coords)
     grassland = worldCover.eq(30)  # Grassland class in ESA WorldCover
