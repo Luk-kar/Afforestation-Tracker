@@ -17,6 +17,13 @@ from stages.data_acquisition import (
     get_soil_organic_carbon,
     get_world_cover,
     get_afforestation_candidates,
+    get_rootzone_soil_moisture_point,
+    get_precipitation_point,
+    get_soil_organic_carbon_point,
+    get_elevation_point,
+    get_slope_point,
+    get_world_cover_point,
+    get_afforestation_candidates_point,
 )
 
 establish_connection()
@@ -292,194 +299,6 @@ def display_map(map_data, roi_coords):
     return Map
 
 
-# Define a function to get elevation data from Google Earth Engine
-def get_elevation_point(lat, lon):
-    point = ee.Geometry.Point(lon, lat)
-    elevation = (
-        ee.Image("USGS/SRTMGL1_003")
-        .sample(point, 30)
-        .first()
-        .get("elevation")
-        .getInfo()
-    )
-    return elevation
-
-
-def get_slope_point(lat, lon):
-
-    point = ee.Geometry.Point([lon, lat])
-
-    elevation = ee.Image("USGS/SRTMGL1_003")
-    slope = ee.Terrain.slope(elevation)
-
-    slope_value = slope.sample(point, 30).first().get("slope").getInfo()
-
-    return slope_value
-
-
-def get_rootzone_soil_moisture_point(lat, lon):
-    point = ee.Geometry.Point([lon, lat])
-    soil_moisture = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
-
-    # Filter the collection to a specific period if necessary and reduce it to get a single image
-    # Here we're assuming to take the first available image for simplicity
-    latest_soil_moisture_image = (
-        soil_moisture.first()
-    )  # Assuming you want the latest available data
-
-    # Now using the 'sm_rootzone' band
-    soil_moisture_value = (
-        latest_soil_moisture_image.reduceRegion(
-            ee.Reducer.first(),  # Use the appropriate reducer
-            point,
-            scale=1000,  # Set an appropriate scale based on dataset resolution
-        )
-        .get("sm_rootzone")
-        .getInfo()
-    )
-
-    if soil_moisture_value is None:
-        soil_moisture_value = 0
-
-    return soil_moisture_value
-
-
-def get_precipitation_point(lat, lon, start_date, end_date):
-    point = ee.Geometry.Point([lon, lat])
-    # Get the precipitation data image collection
-    precipitation = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
-
-    # Filter the collection based on the specified date range
-    total_precipitation = precipitation.filterDate(start_date, end_date).sum()
-
-    # Use reduceRegion to get a single value
-    precipitation_value = (
-        total_precipitation.reduceRegion(
-            reducer=ee.Reducer.first(),  # Using first() reducer to get the value at the point
-            geometry=point,
-            scale=30,  # Scale parameter should be set appropriately for the data resolution
-        )
-        .get("precipitation")
-        .getInfo()
-    )  # Make sure 'precipitation' is the correct band name
-
-    return precipitation_value
-
-
-def get_soil_organic_carbon_point(lat, lon):
-    point = ee.Geometry.Point([lon, lat])
-    # Load the specific image which represents soil organic carbon
-    soil_organic_carbon = ee.Image("ISDASOIL/Africa/v1/carbon_total")
-
-    # Use reduceRegion instead of sample to extract the value from the image
-    carbon_value = (
-        soil_organic_carbon.reduceRegion(
-            reducer=ee.Reducer.first(),  # Using first() reducer to get the value
-            geometry=point,
-            scale=30,  # The scale should match the resolution at which the data is meaningful
-        )
-        .get("mean_0_20")
-        .getInfo()
-    )  # Ensure the correct band name is used
-
-    return carbon_value
-
-
-def get_world_cover_point(lat, lon):
-    point = ee.Geometry.Point([lon, lat])
-    world_cover = ee.Image("ESA/WorldCover/v100/2020")
-
-    # Use reduceRegion instead of sample to get the value directly
-    world_cover_value = (
-        world_cover.reduceRegion(
-            reducer=ee.Reducer.first(),  # Getting the first value that matches the point
-            geometry=point,
-            scale=10,  # Adjust scale according to the resolution of the WorldCover data
-        )
-        .get("Map")
-        .getInfo()
-    )  # 'Map' is the band name
-
-    # Mapping from WorldCover class IDs to names
-    class_names = {
-        10: "Tree Cover",
-        20: "Shrubland",
-        30: "Grassland",
-        40: "Cropland",
-        50: "Built-up",
-        60: "Bare / Sparse Vegetation",
-        70: "Snow and Ice",
-        80: "Permanent Water Bodies",
-        90: "Herbaceous Wetland",
-        95: "Mangroves",
-        100: "Moss and Lichen",
-    }
-
-    # Return the corresponding class name for the world cover value
-    return class_names.get(
-        world_cover_value, "Unknown Cover"
-    )  # Default to "Unknown Class" if not found
-
-
-def get_afforestation_candidates_point(lat, lon, start_date, end_date):
-    point = ee.Geometry.Point([lon, lat])
-
-    # Load necessary datasets
-    elevation = ee.Image("USGS/SRTMGL1_003")
-    slope = ee.Terrain.slope(elevation)
-    chirps = (
-        ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
-        .filterDate(start_date, end_date)
-        .sum()
-    )
-    soil_moisture = (
-        ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
-        .filterDate("2020-01-01", "2020-01-10")  # Adjust dates as needed
-        .select("sm_rootzone")
-        .mean()
-    )
-    worldCover = ee.Image("ESA/WorldCover/v100/2020")
-
-    # Calculate conditions using reduceRegion
-    is_suitable_slope = (
-        slope.lt(15).reduceRegion(ee.Reducer.first(), point, 30).get("slope").getInfo()
-        is not None
-    )
-    is_good_precip = (
-        chirps.gte(200)
-        .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("precipitation")
-        .getInfo()
-        >= 200
-    )
-    is_suitable_moisture = (
-        soil_moisture.gte(0.1)
-        .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("sm_rootzone")
-        .getInfo()
-        >= 0.1
-    )
-    world_cover_value = (
-        worldCover.reduceRegion(ee.Reducer.first(), point, 30).get("Map").getInfo()
-    )
-
-    # Check land cover
-    is_grassland = world_cover_value == 30
-    is_barrenland = world_cover_value == 60
-    is_suitable_land = is_grassland or is_barrenland
-
-    # Final check for afforestation candidate
-    if (
-        is_suitable_slope
-        and is_good_precip
-        and is_suitable_moisture
-        and is_suitable_land
-    ):
-        return "Suitable for Afforestation"
-    else:
-        return "Not Suitable for Afforestation"
-
-
 def get_address_from_coordinates(lat, lon):
     """Fetch address from Nominatim Geocoding API using latitude and longitude."""
     base_url = "https://nominatim.openstreetmap.org/reverse"
@@ -542,6 +361,9 @@ def display_map_point_info(map_result):
     st.success(result)
 
 
+legends_html = generate_legend_html(map_data)
+st.markdown(legends_html, unsafe_allow_html=True)
+
 folium_map = display_map(map_data, roi_coords)
 
 map_result = st_folium(folium_map)
@@ -549,6 +371,3 @@ map_result = st_folium(folium_map)
 # Show elevation on click
 if map_result["last_clicked"]:
     display_map_point_info(map_result)
-
-legends_html = generate_legend_html(map_data)
-st.markdown(legends_html, unsafe_allow_html=True)
