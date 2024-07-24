@@ -1,6 +1,6 @@
-import ee
-
+# Third party
 import requests
+import ee
 
 
 def get_rootzone_soil_moisture(roi_coords, start_date, end_date):

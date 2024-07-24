@@ -1,11 +1,9 @@
-import requests
-
+# Third party
+import folium
 import geemap.foliumap as geemap
 import streamlit as st
-import folium
-import ee
-from streamlit_folium import st_folium
 from folium.plugins import MousePosition
+from streamlit_folium import st_folium
 
 # Initialize the Earth Engine module
 from stages.connection import establish_connection

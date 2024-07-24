@@ -1,4 +1,7 @@
+# Python
 import ee
+
+# Third party
 import os
 
 
