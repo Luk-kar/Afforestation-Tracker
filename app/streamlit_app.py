@@ -24,6 +24,7 @@ from stages.data_acquisition import (
     get_slope_point,
     get_world_cover_point,
     get_afforestation_candidates_point,
+    get_address_from_coordinates,
 )
 
 establish_connection()
@@ -299,23 +300,6 @@ def display_map(map_data, roi_coords):
     return Map
 
 
-def get_address_from_coordinates(lat, lon):
-    """Fetch address from Nominatim Geocoding API using latitude and longitude."""
-    base_url = "https://nominatim.openstreetmap.org/reverse"
-    headers = {"User-Agent": "MyApp"}
-    params = {"lat": lat, "lon": lon, "format": "json"}
-    response = requests.get(base_url, params=params, headers=headers)
-    if response.status_code == 200:
-        json_result = response.json()
-        address = json_result.get("display_name")
-        if address:
-            return address
-        else:
-            return "No address found."
-    else:
-        return "Error in Geocoding API call."
-
-
 def display_map_point_info(map_result):
     # Extract latitude and longitude from last clicked point
     lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
@@ -361,9 +345,6 @@ def display_map_point_info(map_result):
     st.success(result)
 
 
-legends_html = generate_legend_html(map_data)
-st.markdown(legends_html, unsafe_allow_html=True)
-
 folium_map = display_map(map_data, roi_coords)
 
 map_result = st_folium(folium_map)
@@ -371,3 +352,6 @@ map_result = st_folium(folium_map)
 # Show elevation on click
 if map_result["last_clicked"]:
     display_map_point_info(map_result)
+
+legends_html = generate_legend_html(map_data)
+st.markdown(legends_html, unsafe_allow_html=True)
