@@ -2,6 +2,16 @@
 import requests
 import ee
 
+# Google Earth Engine Collections
+# All of the data is open-source, Google provides the server side computation
+gee_map_collections = {
+    "rootzone_soil_moisture": "NASA/SMAP/SPL4SMGP/007",
+    "precipitation": "UCSB-CHG/CHIRPS/DAILY",
+    "elevation": "USGS/SRTMGL1_003",
+    "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
+    "world_type_terrain_cover": "ESA/WorldCover/v100/2020",
+}
+
 
 def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
     """
@@ -14,7 +24,7 @@ def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
     Returns:
         ee.Image: The mean root zone soil moisture image for the specified period.
     """
-    dataset = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    dataset = ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
     roi = ee.Geometry.Polygon(roi_coords)
     filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
     soil_moisture_rootzone = filtered_dataset.select("sm_rootzone")
@@ -36,7 +46,7 @@ def get_precipitation_data(roi_coords, start_date, end_date):
     """
     roi = ee.Geometry.Polygon(roi_coords)
     return (
-        ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+        ee.ImageCollection(gee_map_collections["precipitation"])
         .filterDate(start_date, end_date)
         .filterBounds(roi)
         .select("precipitation")
@@ -56,7 +66,7 @@ def get_elevation(roi_coords):
     Returns:
         ee.Image: The elevation image for the specified region.
     """
-    elevation = ee.Image("USGS/SRTMGL1_003")
+    elevation = ee.Image(gee_map_collections["elevation"])
     roi = ee.Geometry.Polygon(roi_coords)
     elevation_clipped = elevation.clip(roi)
     return elevation_clipped
@@ -87,7 +97,7 @@ def get_soil_organic_carbon(roi_coords):
     Returns:
         ee.Image: The soil organic carbon image for the specified region.
     """
-    soilGrids = ee.Image("ISDASOIL/Africa/v1/carbon_total")
+    soilGrids = ee.Image(gee_map_collections["soil_organic_carbon"])
     soc_0_20cm = soilGrids.select("mean_0_20")
     roi = ee.Geometry.Polygon(roi_coords)
     soc_0_20cm_clipped = soc_0_20cm.clip(roi)
@@ -104,7 +114,7 @@ def get_world_cover(roi_coords):
     Returns:
         ee.Image: The world cover image for the specified region.
     """
-    worldCover = ee.Image("ESA/WorldCover/v100/2020")
+    worldCover = ee.Image(gee_map_collections["world_type_terrain_cover"])
     roi = ee.Geometry.Polygon(roi_coords)
     worldCover_clipped = worldCover.clip(roi)
     return worldCover_clipped
@@ -125,7 +135,7 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
     roi = ee.Geometry.Polygon(roi_coords)
 
     chirpsYear = (
-        ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+        ee.ImageCollection(gee_map_collections["precipitation"])
         .filterDate(start_date, end_date)
         .filterBounds(roi)
     )
@@ -134,7 +144,7 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
     slope = ee.Terrain.slope(elevation)
 
     filteredMoistureDataset = (
-        ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+        ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
         .filterDate("2020-01-01", "2020-01-10")
         .filterBounds(roi)
     )
@@ -161,7 +171,7 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
 
 def get_rootzone_soil_moisture_point(lat, lon):
     point = ee.Geometry.Point([lon, lat])
-    soil_moisture = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
+    soil_moisture = ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
 
     # Filter the collection to a specific period if necessary and reduce it to get a single image
     # Here we're assuming to take the first available image for simplicity
@@ -189,7 +199,7 @@ def get_rootzone_soil_moisture_point(lat, lon):
 def get_precipitation_point(lat, lon, start_date, end_date):
     point = ee.Geometry.Point([lon, lat])
     # Get the precipitation data image collection
-    precipitation = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+    precipitation = ee.ImageCollection(gee_map_collections["precipitation"])
 
     # Filter the collection based on the specified date range
     total_precipitation = precipitation.filterDate(start_date, end_date).sum()
@@ -211,7 +221,7 @@ def get_precipitation_point(lat, lon, start_date, end_date):
 def get_soil_organic_carbon_point(lat, lon):
     point = ee.Geometry.Point([lon, lat])
     # Load the specific image which represents soil organic carbon
-    soil_organic_carbon = ee.Image("ISDASOIL/Africa/v1/carbon_total")
+    soil_organic_carbon = ee.Image(gee_map_collections["soil_organic_carbon"])
 
     # Use reduceRegion instead of sample to extract the value from the image
     carbon_value = (
@@ -230,7 +240,7 @@ def get_soil_organic_carbon_point(lat, lon):
 def get_elevation_point(lat, lon):
     point = ee.Geometry.Point(lon, lat)
     elevation = (
-        ee.Image("USGS/SRTMGL1_003")
+        ee.Image(gee_map_collections["elevation"])
         .sample(point, 30)
         .first()
         .get("elevation")
@@ -243,7 +253,7 @@ def get_slope_point(lat, lon):
 
     point = ee.Geometry.Point([lon, lat])
 
-    elevation = ee.Image("USGS/SRTMGL1_003")
+    elevation = ee.Image(gee_map_collections["elevation"])
     slope = ee.Terrain.slope(elevation)
 
     slope_value = slope.sample(point, 30).first().get("slope").getInfo()
@@ -253,7 +263,7 @@ def get_slope_point(lat, lon):
 
 def get_world_cover_point(lat, lon):
     point = ee.Geometry.Point([lon, lat])
-    world_cover = ee.Image("ESA/WorldCover/v100/2020")
+    world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"])
 
     # Use reduceRegion instead of sample to get the value directly
     world_cover_value = (
@@ -291,7 +301,7 @@ def get_afforestation_candidates_point(lat, lon, start_date, end_date):
     point = ee.Geometry.Point([lon, lat])
 
     # Load necessary datasets
-    elevation = ee.Image("USGS/SRTMGL1_003")
+    elevation = ee.Image(gee_map_collections["elevation"])
     slope = ee.Terrain.slope(elevation)
     chirps = (
         ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
