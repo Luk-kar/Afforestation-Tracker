@@ -543,12 +543,10 @@ def display_map_point_info(map_result):
 
 
 folium_map = display_map(map_data, roi_coords)
-# folium_map.to_streamlit()
 
 map_result = st_folium(folium_map)
 
 # Show elevation on click
-
 if map_result["last_clicked"]:
     display_map_point_info(map_result)
 
