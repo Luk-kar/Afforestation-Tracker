@@ -9,7 +9,7 @@ from streamlit_folium import st_folium
 from stages.connection import establish_connection
 from stages.data_acquisition import (
     get_rootzone_soil_moisture,
-    get_precipitation_data,
+    get_precipitation,
     get_elevation,
     get_slope,
     get_soil_organic_carbon,
@@ -164,7 +164,7 @@ map_data = {
         },
     },
     "precipitation": {
-        "data": get_precipitation_data(
+        "data": get_precipitation(
             roi["roi_coords"],
             roi["precipitation"]["start_date"],
             roi["precipitation"]["end_date"],
@@ -298,20 +298,26 @@ def display_map(map_data, roi_coords):
     return Map
 
 
-def display_map_point_info(map_result):
+def display_map_point_info(map_result, roi):
     # Extract latitude and longitude from last clicked point
     lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
 
     # Fetch data for each attribute
     elevation = get_elevation_point(lat, lon)
     slope = round(get_slope_point(lat, lon), 1)
-    soil_moisture = round(get_rootzone_soil_moisture_point(lat, lon), 2)
-    precipitation = round(
-        get_precipitation_point(
+    soil_moisture = round(
+        get_rootzone_soil_moisture_point(
             lat,
             lon,
             roi["precipitation"]["start_date"],
             roi["precipitation"]["end_date"],
+        ),
+        2,
+    )
+    precipitation = round(
+        get_precipitation_point(
+            lat,
+            lon,
         ),
         2,
     )
@@ -349,7 +355,7 @@ map_result = st_folium(folium_map)
 
 # Show elevation on click
 if map_result["last_clicked"]:
-    display_map_point_info(map_result)
+    display_map_point_info(map_result, roi)
 
 legends_html = generate_legend_html(map_data)
 st.markdown(legends_html, unsafe_allow_html=True)
