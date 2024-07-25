@@ -13,6 +13,93 @@ gee_map_collections = {
 }
 
 
+def clip_image_to_geometry(image, geometry):
+    """
+    Clips the provided image to the given geometry if the geometry is a polygon or multipolygon.
+
+    Parameters:
+        image (ee.Image): The Earth Engine image to be clipped.
+        geometry (ee.Geometry): The geometry to which the image might be clipped.
+
+    Returns:
+        ee.Image: The potentially clipped image.
+    """
+    geometry_type = geometry.type().getInfo()
+    if geometry_type == "Polygon" or geometry_type == "MultiPolygon":
+        return image.clip(geometry)
+    return image
+
+
+def fetch_mean_soil_moisture(date_range, geometry):
+    """
+    Fetches and computes the mean soil moisture over a given date range and geographical area.
+
+    Parameters:
+        date_range (tuple): A tuple of (start_date, end_date) in 'YYYY-MM-DD' format.
+        geometry (ee.Geometry): The geographic area for the soil moisture calculation.
+
+    Returns:
+        ee.Image: An image representing the mean soil moisture over the specified period and area.
+    """
+
+    soil_moisture = ee.ImageCollection(
+        gee_map_collections["rootzone_soil_moisture"],
+    )
+    filtered_soil_moisture = soil_moisture.filterDate(*date_range).filterBounds(
+        geometry
+    )
+    mean_soil_moisture_image = filtered_soil_moisture.select("sm_rootzone").mean()
+
+    mean_soil_moisture_image = clip_image_to_geometry(
+        mean_soil_moisture_image, geometry
+    )
+
+    return mean_soil_moisture_image
+
+
+def fetch_total_precipitation(date_range, geometry):
+    """
+    Fetches and computes the total precipitation over a given date range and geographical area.
+
+    Parameters:
+        image_collection_name (str): Name of the image collection in the Google Earth Engine collections.
+        date_range (tuple): A tuple of (start_date, end_date) in 'YYYY-MM-DD' format.
+        geometry (ee.Geometry): The geographic area for the precipitation calculation.
+
+    Returns:
+        ee.Image: An image representing the total precipitation over the specified period and area.
+    """
+
+    precipitation = ee.ImageCollection(gee_map_collections["precipitation"])
+    filtered_precipitation = precipitation.filterDate(*date_range).filterBounds(
+        geometry
+    )
+    total_precipitation_image = filtered_precipitation.select("precipitation").sum()
+
+    total_precipitation_image = clip_image_to_geometry(
+        total_precipitation_image, geometry
+    )
+
+    return total_precipitation_image.rename("TotalPrecipitation")
+
+
+def fetch_elevation(geometry):
+    """
+    Fetches and computes the elevation data over a given date range and geographical area.
+
+    Parameters:
+        geometry (ee.Geometry): The geographic area for the elevation calculation.
+
+    Returns:
+        ee.Image: An image representing the elevation over the specified area.
+    """
+
+    elevation = ee.Image(gee_map_collections["elevation"])
+    elevation_image = elevation.clip(geometry)
+
+    return elevation_image.rename("Elevation")
+
+
 def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
     """
     Retrieves the mean root zone soil moisture for a specified date range.
@@ -24,12 +111,9 @@ def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
     Returns:
         ee.Image: The mean root zone soil moisture image for the specified period.
     """
-    dataset = ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
     roi = ee.Geometry.Polygon(roi_coords)
-    filtered_dataset = dataset.filterDate(start_date, end_date).filterBounds(roi)
-    soil_moisture_rootzone = filtered_dataset.select("sm_rootzone")
-    mean_soil_moisture_rootzone = soil_moisture_rootzone.mean().clip(roi)
-    return mean_soil_moisture_rootzone
+    mean_soil_moisture_image = fetch_mean_soil_moisture((start_date, end_date), roi)
+    return mean_soil_moisture_image
 
 
 def get_precipitation(roi_coords, start_date, end_date):
@@ -45,15 +129,7 @@ def get_precipitation(roi_coords, start_date, end_date):
         ee.Image: The total precipitation image for the specified period.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return (
-        ee.ImageCollection(gee_map_collections["precipitation"])
-        .filterDate(start_date, end_date)
-        .filterBounds(roi)
-        .select("precipitation")
-        .map(lambda image: image.clip(roi))  # Clip each image to the ROI
-        .sum()
-        .rename("Precipitation")
-    )
+    return fetch_total_precipitation((start_date, end_date), roi)
 
 
 def get_elevation(roi_coords):
@@ -66,10 +142,9 @@ def get_elevation(roi_coords):
     Returns:
         ee.Image: The elevation image for the specified region.
     """
-    elevation = ee.Image(gee_map_collections["elevation"])
     roi = ee.Geometry.Polygon(roi_coords)
-    elevation_clipped = elevation.clip(roi)
-    return elevation_clipped
+    elevation_image = fetch_elevation(roi)
+    return elevation_image
 
 
 def get_slope(roi_coords):
@@ -183,50 +258,27 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
         float: Average soil moisture value at the given point for the specified date range, or 0 if no data is available.
     """
     point = ee.Geometry.Point([lon, lat])
-    soil_moisture = ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
-    filtered_soil_moisture = soil_moisture.filterDate(
-        start_date, end_date
-    ).filterBounds(point)
-
-    latest_soil_moisture_image = (
-        filtered_soil_moisture.mean()
-    )  # Assuming you want the latest available data
-
-    # Now using the 'sm_rootzone' band
+    mean_soil_moisture_image = fetch_mean_soil_moisture((start_date, end_date), point)
+    # Retrieve the mean soil moisture value at the point
     soil_moisture_value = (
-        latest_soil_moisture_image.reduceRegion(
-            ee.Reducer.first(),  # Use the appropriate reducer
-            point,
-            scale=1000,  # Set an appropriate scale based on dataset resolution
-        )
+        mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=1000)
         .get("sm_rootzone")
         .getInfo()
     )
-
-    if soil_moisture_value is None:
-        soil_moisture_value = 0
-
-    return soil_moisture_value
+    return soil_moisture_value if soil_moisture_value is not None else 0
 
 
 def get_precipitation_point(lat, lon, start_date, end_date):
     point = ee.Geometry.Point([lon, lat])
-    # Get the precipitation data image collection
-    precipitation = ee.ImageCollection(gee_map_collections["precipitation"])
+    total_precipitation_image = fetch_total_precipitation((start_date, end_date), point)
 
-    # Filter the collection based on the specified date range
-    total_precipitation = precipitation.filterDate(start_date, end_date).sum()
-
-    # Use reduceRegion to get a single value
     precipitation_value = (
-        total_precipitation.reduceRegion(
-            reducer=ee.Reducer.first(),  # Using first() reducer to get the value at the point
-            geometry=point,
-            scale=30,  # Scale parameter should be set appropriately for the data resolution
+        total_precipitation_image.reduceRegion(
+            reducer=ee.Reducer.first(), geometry=point, scale=100
         )
-        .get("precipitation")
+        .get("TotalPrecipitation")
         .getInfo()
-    )  # Make sure 'precipitation' is the correct band name
+    )
 
     return precipitation_value
 
@@ -251,15 +303,17 @@ def get_soil_organic_carbon_point(lat, lon):
 
 
 def get_elevation_point(lat, lon):
-    point = ee.Geometry.Point(lon, lat)
-    elevation = (
-        ee.Image(gee_map_collections["elevation"])
-        .sample(point, 30)
-        .first()
-        .get("elevation")
+
+    point = ee.Geometry.Point([lon, lat])
+    elevation_image = fetch_elevation(point)
+
+    elevation_value = (
+        elevation_image.reduceRegion(ee.Reducer.first(), point, scale=10)
+        .get("Elevation")
         .getInfo()
     )
-    return elevation
+
+    return elevation_value
 
 
 def get_slope_point(lat, lon):
