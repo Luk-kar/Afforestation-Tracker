@@ -309,8 +309,8 @@ def display_map_point_info(map_result, roi):
         get_rootzone_soil_moisture_point(
             lat,
             lon,
-            roi["precipitation"]["start_date"],
-            roi["precipitation"]["end_date"],
+            roi["soil_moisture"]["start_date"],
+            roi["soil_moisture"]["end_date"],
         ),
         2,
     )
@@ -318,6 +318,8 @@ def display_map_point_info(map_result, roi):
         get_precipitation_point(
             lat,
             lon,
+            roi["precipitation"]["start_date"],
+            roi["precipitation"]["end_date"],
         ),
         2,
     )

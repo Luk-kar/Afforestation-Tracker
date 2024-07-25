@@ -188,21 +188,25 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
         start_date, end_date
     ).filterBounds(point)
 
-    # Aggregate images by taking the mean of the soil moisture values
-    mean_soil_moisture_image = filtered_soil_moisture.select("sm_rootzone").mean()
+    latest_soil_moisture_image = (
+        filtered_soil_moisture.mean()
+    )  # Assuming you want the latest available data
 
-    # Use the 'sm_rootzone' band to get mean soil moisture, using a larger scale to reduce computation
-    soil_moisture_value = mean_soil_moisture_image.reduceRegion(
-        ee.Reducer.mean(),  # More appropriate reducer for averaging
-        point,
-        scale=1000,  # Increased scale to reduce detail and computation
-    ).get("sm_rootzone")
+    # Now using the 'sm_rootzone' band
+    soil_moisture_value = (
+        latest_soil_moisture_image.reduceRegion(
+            ee.Reducer.first(),  # Use the appropriate reducer
+            point,
+            scale=1000,  # Set an appropriate scale based on dataset resolution
+        )
+        .get("sm_rootzone")
+        .getInfo()
+    )
 
-    # Evaluate the result server-side and fetch it asynchronously
-    def callback(value):
-        print("Soil Moisture Value:", value if value else 0)
+    if soil_moisture_value is None:
+        soil_moisture_value = 0
 
-    soil_moisture_value.evaluate(callback)
+    return soil_moisture_value
 
 
 def get_precipitation_point(lat, lon, start_date, end_date):
