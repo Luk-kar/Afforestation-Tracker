@@ -100,7 +100,42 @@ def fetch_elevation(geometry):
     return elevation_image.rename("Elevation")
 
 
-def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
+def fetch_soil_organic_carbon(geometry):
+    """
+    Fetches and processes the soil organic carbon data for a given geometry, which can be a point or a region.
+
+    Parameters:
+        geometry (ee.Geometry): The geometry (Point for specific locations or Polygon for regions).
+
+    Returns:
+        ee.Image or float: Soil organic carbon data clipped to the region or a specific value at a point.
+    """
+
+    soil_organic_carbon = ee.Image(gee_map_collections["soil_organic_carbon"]).select(
+        "mean_0_20"
+    )
+    soil_organic_carbon = clip_image_to_geometry(soil_organic_carbon, geometry)
+
+    return soil_organic_carbon
+
+
+def fetch_world_cover(geometry):
+    """
+    Retrieves the world cover data for the specified region of interest.
+
+    Parameters:
+        geometry (list): List of coordinates defining the region of interest.
+
+    Returns:
+        ee.Image: The world cover image for the specified region.
+    """
+    world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"])
+    world_cover = clip_image_to_geometry(world_cover, geometry)
+
+    return world_cover
+
+
+def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
     """
     Retrieves the mean root zone soil moisture for a specified date range.
 
@@ -116,7 +151,7 @@ def get_rootzone_soil_moisture(roi_coords, start_date, end_date):
     return mean_soil_moisture_image
 
 
-def get_precipitation(roi_coords, start_date, end_date):
+def get_precipitation_region(roi_coords, start_date, end_date):
     """
     Retrieves the total precipitation for a specified date range.
 
@@ -132,7 +167,7 @@ def get_precipitation(roi_coords, start_date, end_date):
     return fetch_total_precipitation((start_date, end_date), roi)
 
 
-def get_elevation(roi_coords):
+def get_elevation_region(roi_coords):
     """
     Retrieves the elevation data for the specified region of interest.
 
@@ -147,7 +182,7 @@ def get_elevation(roi_coords):
     return elevation_image
 
 
-def get_slope(roi_coords):
+def get_slope_region(roi_coords):
     """
     Retrieves the slope data for the specified region of interest.
 
@@ -157,7 +192,7 @@ def get_slope(roi_coords):
     Returns:
         ee.Image: The slope image for the specified region.
     """
-    elevation = get_elevation(roi_coords)
+    elevation = get_elevation_region(roi_coords)
     slope = ee.Terrain.slope(elevation)
     return slope
 
@@ -172,11 +207,9 @@ def get_soil_organic_carbon(roi_coords):
     Returns:
         ee.Image: The soil organic carbon image for the specified region.
     """
-    soilGrids = ee.Image(gee_map_collections["soil_organic_carbon"])
-    soc_0_20cm = soilGrids.select("mean_0_20")
     roi = ee.Geometry.Polygon(roi_coords)
-    soc_0_20cm_clipped = soc_0_20cm.clip(roi)
-    return soc_0_20cm_clipped
+    soc_0_20cm = fetch_soil_organic_carbon(roi)
+    return soc_0_20cm
 
 
 def get_world_cover(roi_coords):
@@ -189,9 +222,9 @@ def get_world_cover(roi_coords):
     Returns:
         ee.Image: The world cover image for the specified region.
     """
-    worldCover = ee.Image(gee_map_collections["world_type_terrain_cover"])
     roi = ee.Geometry.Polygon(roi_coords)
-    worldCover_clipped = worldCover.clip(roi)
+
+    worldCover_clipped = fetch_world_cover(roi)
     return worldCover_clipped
 
 
@@ -215,7 +248,7 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
         .filterBounds(roi)
     )
     annualPrecipitation = chirpsYear.sum()
-    elevation = get_elevation(roi_coords)
+    elevation = get_elevation_region(roi_coords)
     slope = ee.Terrain.slope(elevation)
 
     filteredMoistureDataset = (
@@ -330,20 +363,18 @@ def get_slope_point(lat, lon):
 
 def get_world_cover_point(lat, lon):
     point = ee.Geometry.Point([lon, lat])
-    world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"])
+    world_cover = fetch_world_cover(point)
 
-    # Use reduceRegion instead of sample to get the value directly
     world_cover_value = (
         world_cover.reduceRegion(
-            reducer=ee.Reducer.first(),  # Getting the first value that matches the point
+            reducer=ee.Reducer.first(),
             geometry=point,
-            scale=10,  # Adjust scale according to the resolution of the WorldCover data
+            scale=10,
         )
         .get("Map")
         .getInfo()
     )  # 'Map' is the band name
 
-    # Mapping from WorldCover class IDs to names
     class_names = {
         10: "Tree Cover",
         20: "Shrubland",
@@ -358,10 +389,7 @@ def get_world_cover_point(lat, lon):
         100: "Moss and Lichen",
     }
 
-    # Return the corresponding class name for the world cover value
-    return class_names.get(
-        world_cover_value, "Unknown Cover"
-    )  # Default to "Unknown Class" if not found
+    return class_names.get(world_cover_value, "Unknown Cover")
 
 
 def get_afforestation_candidates_point(lat, lon, start_date, end_date):

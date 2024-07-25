@@ -8,10 +8,10 @@ from streamlit_folium import st_folium
 # Initialize the Earth Engine module
 from stages.connection import establish_connection
 from stages.data_acquisition import (
-    get_rootzone_soil_moisture,
-    get_precipitation,
-    get_elevation,
-    get_slope,
+    get_rootzone_soil_moisture_region,
+    get_precipitation_region,
+    get_elevation_region,
+    get_slope_region,
     get_soil_organic_carbon,
     get_world_cover,
     get_afforestation_candidates,
@@ -47,7 +47,7 @@ roi = {
 
 map_data = {
     "elevation": {
-        "data": get_elevation(roi["roi_coords"]),
+        "data": get_elevation_region(roi["roi_coords"]),
         "vis_params": {
             "min": 0,
             "max": 3000,
@@ -66,7 +66,7 @@ map_data = {
         },
     },
     "slope": {
-        "data": get_slope(roi["roi_coords"]),
+        "data": get_slope_region(roi["roi_coords"]),
         "vis_params": {
             "min": 0,
             "max": 60,
@@ -142,7 +142,7 @@ map_data = {
         },
     },
     "soil_moisture": {
-        "data": get_rootzone_soil_moisture(
+        "data": get_rootzone_soil_moisture_region(
             roi["roi_coords"],
             roi["soil_moisture"]["start_date"],
             roi["soil_moisture"]["end_date"],
@@ -164,7 +164,7 @@ map_data = {
         },
     },
     "precipitation": {
-        "data": get_precipitation(
+        "data": get_precipitation_region(
             roi["roi_coords"],
             roi["precipitation"]["start_date"],
             roi["precipitation"]["end_date"],
