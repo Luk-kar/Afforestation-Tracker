@@ -13,23 +13,6 @@ gee_map_collections = {
 }
 
 
-def clip_image_to_geometry(image, geometry):
-    """
-    Clips the provided image to the given geometry if the geometry is a polygon or multipolygon.
-
-    Parameters:
-        image (ee.Image): The Earth Engine image to be clipped.
-        geometry (ee.Geometry): The geometry to which the image might be clipped.
-
-    Returns:
-        ee.Image: The potentially clipped image.
-    """
-    geometry_type = geometry.type().getInfo()
-    if geometry_type == "Polygon" or geometry_type == "MultiPolygon":
-        return image.clip(geometry)
-    return image
-
-
 def fetch_mean_soil_moisture(date_range, geometry):
     """
     Fetches and computes the mean soil moisture over a given date range and geographical area.
@@ -50,9 +33,7 @@ def fetch_mean_soil_moisture(date_range, geometry):
     )
     mean_soil_moisture_image = filtered_soil_moisture.select("sm_rootzone").mean()
 
-    mean_soil_moisture_image = clip_image_to_geometry(
-        mean_soil_moisture_image, geometry
-    )
+    mean_soil_moisture_image = mean_soil_moisture_image.clip(geometry)
 
     return mean_soil_moisture_image
 
@@ -76,9 +57,7 @@ def fetch_total_precipitation(date_range, geometry):
     )
     total_precipitation_image = filtered_precipitation.select("precipitation").sum()
 
-    total_precipitation_image = clip_image_to_geometry(
-        total_precipitation_image, geometry
-    )
+    total_precipitation_image = total_precipitation_image.clip(geometry)
 
     return total_precipitation_image.rename("TotalPrecipitation")
 
@@ -114,7 +93,7 @@ def fetch_soil_organic_carbon(geometry):
     soil_organic_carbon = ee.Image(gee_map_collections["soil_organic_carbon"]).select(
         "mean_0_20"
     )
-    soil_organic_carbon = clip_image_to_geometry(soil_organic_carbon, geometry)
+    soil_organic_carbon = soil_organic_carbon.clip(geometry)
 
     return soil_organic_carbon
 
@@ -130,7 +109,7 @@ def fetch_world_cover(geometry):
         ee.Image: The world cover image for the specified region.
     """
     world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"])
-    world_cover = clip_image_to_geometry(world_cover, geometry)
+    world_cover = world_cover.clip(geometry)
 
     return world_cover
 
