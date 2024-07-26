@@ -153,13 +153,6 @@ def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
     """
     # TODO make much harsher conditions
 
-    slope = fetch_slope_data(geometry)
-    precipitation = fetch_total_precipitation_data((start_date, end_date), geometry)
-    soil_moisture = fetch_mean_soil_moisture_data(
-        ("2020-06-01", "2020-10-01"), geometry
-    )
-    world_cover = fetch_world_cover_data(geometry)
-
     results = {
         "is_suitable_slope": slope.lt(15),
         "suitable_precipitation": precipitation.gte(200),
@@ -260,31 +253,60 @@ def get_world_cover_region(roi_coords):
 
 
 def get_afforestation_candidates_region(roi_coords, start_date, end_date):
-    """
-    Identifies candidate regions for afforestation based on multiple criteria.
-
-    Parameters:
-        roi_coords (list): List of coordinates defining the region of interest.
-        start_date (str): The start date of the period of interest in 'YYYY-MM-DD' format.
-        end_date (str): The end date of the period of interest in 'YYYY-MM-DD' format.
-
-    Returns:
-        ee.Image: The candidate regions for afforestation.
-    """
     roi = ee.Geometry.Polygon(roi_coords)
-    conditions = fetch_and_evaluate_conditions_data(roi, start_date, end_date)
 
-    vegetation_mask = conditions["grassland"].Or(conditions["barrenland"])
+    srtm = ee.Image("USGS/SRTMGL1_003")
+    soilGrids = ee.Image("ISDASOIL/Africa/v1/carbon_total")
+    soc_0_20cm = soilGrids.select("mean_0_20")
+    worldCover = ee.Image("ESA/WorldCover/v100/2020")
+    chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
+    moisture = ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
 
-    hydration_criteria = conditions["suitable_precipitation"].Or(
-        conditions["suitable_moisture"]
+    srtmSahel = srtm.clip(roi)
+    worldCoverSahel = worldCover.clip(roi)
+    soc_0_20cm = soc_0_20cm.clip(roi)
+
+    # Filter the CHIRPS data to the specified date range and region
+    chirpsYear = chirps.filterDate(start_date, end_date).map(
+        lambda image: image.clip(roi)
     )
 
-    is_not_steep = conditions["is_suitable_slope"]
+    # Sum the daily precipitation to get the annual precipitation
+    annualPrecipitation = chirpsYear.sum()
 
-    candidate_regions = hydration_criteria.And(is_not_steep).And(vegetation_mask)
+    # Calculate the slope in degrees
+    slope = ee.Terrain.slope(srtmSahel)
 
-    return candidate_regions
+    # Define a time period of interest for moisture (modify dates as needed)
+    filteredMoistureDataset = moisture.filterDate("2020-01-01", "2020-01-10").map(
+        lambda image: image.clip(roi)
+    )
+
+    # Select the 'sm_surface' and 'sm_rootzone' bands
+    soilMoistureSurface = filteredMoistureDataset.select("sm_surface")
+
+    # Identify regions with minimal slope
+    suitableSlope = slope.lt(15)
+
+    # Identify regions with minimal soil organic carbon or sufficient moisture
+    suitableSOC = soc_0_20cm.gt(20)  # Example: suitable SOC greater than 20 g/kg
+    suitableMoisture = soilMoistureSurface.mean().gte(
+        0.1
+    )  # Suitable soil moisture greater than or equal to 10% VWC
+    goodMoisture = suitableSOC.Or(suitableMoisture)
+
+    # Combine criteria to identify candidate regions
+    candidateRegions = annualPrecipitation.gte(200).And(suitableSlope).And(goodMoisture)
+
+    # Mask out areas that are not Grass or Shrubland or Barenland
+    grassland = worldCoverSahel.eq(30)  # Grassland class in ESA WorldCover
+    barenland = worldCoverSahel.eq(60)  # Barenland class in ESA WorldCover
+    vegetationMask = grassland.Or(barenland)
+
+    # Apply the mask to the candidate regions
+    afforestationCandidates = candidateRegions.And(vegetationMask)
+
+    return afforestationCandidates
 
 
 def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):

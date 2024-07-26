@@ -298,7 +298,7 @@ def display_map(map_data, roi_coords):
 
 
 def display_map_point_info(map_result, roi):
-    # Extract latitude and longitude from last clicked point
+
     lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
 
     # Fetch data for each attribute
@@ -311,7 +311,8 @@ def display_map_point_info(map_result, roi):
             lon,
             roi["soil_moisture"]["start_date"],
             roi["soil_moisture"]["end_date"],
-        ),
+        )
+        * 100,
         2,
     )
     precipitation = round(
@@ -326,13 +327,13 @@ def display_map_point_info(map_result, roi):
 
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
-    afforestation_candidate = (
-        slope <= 15.0
-        if slope is not None
-        else None
-        and (soil_moisture >= 0.2 or precipitation >= 200.0)
-        and (world_cover in ["grassland", "barrenland"])
-    )
+
+    valid_slope = slope is not None and slope <= 15.0
+    hydration_criteria = soil_moisture >= 20.0 or precipitation >= 200.0
+    valid_cover = world_cover in ["grassland", "barrenland"]
+
+    afforestation_candidate = valid_slope and hydration_criteria and valid_cover
+
     address = get_address_from_coordinates(lat, lon)
 
     # Round latitude and longitude for display
@@ -343,17 +344,19 @@ def display_map_point_info(map_result, roi):
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
     Address: {address}\n
-    Afforestation Candidate: {"Yes" if afforestation_candidate else "No"}\n
+    Afforestation Candidate: **{"Yes" if afforestation_candidate else "No"}**\n
     Elevation: {elevation} meters,
     Slope: {slope}°,
-    Root Zone Soil Moisture: {soil_moisture * 100} %,
+    Root Zone Soil Moisture: {soil_moisture} %,
     Precipitation: {precipitation} mm,
     Soil Organic Carbon: {soil_organic_carbon} g/kg,
     World Cover: {world_cover}
     """
 
-    # Display the results in Streamlit
-    st.success(result)
+    if afforestation_candidate:
+        st.success(result)
+    else:
+        st.error(result)  # no success
 
 
 folium_map = display_map(map_data, roi_coords)
