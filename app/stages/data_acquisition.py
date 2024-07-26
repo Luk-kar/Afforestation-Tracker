@@ -28,14 +28,15 @@ def fetch_mean_soil_moisture(date_range, geometry):
     soil_moisture = ee.ImageCollection(
         gee_map_collections["rootzone_soil_moisture"],
     )
-    filtered_soil_moisture = soil_moisture.filterDate(*date_range).filterBounds(
-        geometry
+    mean_soil_moisture = (
+        soil_moisture.filterDate(*date_range)
+        .filterBounds(geometry)
+        .select("sm_rootzone")
+        .mean()
+        .clip(geometry)
     )
-    mean_soil_moisture_image = filtered_soil_moisture.select("sm_rootzone").mean()
 
-    mean_soil_moisture_image = mean_soil_moisture_image.clip(geometry)
-
-    return mean_soil_moisture_image
+    return mean_soil_moisture.rename("mean_soil_moisture_root_zone")
 
 
 def fetch_total_precipitation(date_range, geometry):
@@ -52,14 +53,15 @@ def fetch_total_precipitation(date_range, geometry):
     """
 
     precipitation = ee.ImageCollection(gee_map_collections["precipitation"])
-    filtered_precipitation = precipitation.filterDate(*date_range).filterBounds(
-        geometry
+    total_precipitation = (
+        precipitation.filterDate(*date_range)
+        .filterBounds(geometry)
+        .select("precipitation")
+        .sum()
+        .clip(geometry)
     )
-    total_precipitation_image = filtered_precipitation.select("precipitation").sum()
 
-    total_precipitation_image = total_precipitation_image.clip(geometry)
-
-    return total_precipitation_image.rename("TotalPrecipitation")
+    return total_precipitation.rename("total_precipitation")
 
 
 def fetch_elevation(geometry):
@@ -73,10 +75,9 @@ def fetch_elevation(geometry):
         ee.Image: An image representing the elevation over the specified area.
     """
 
-    elevation = ee.Image(gee_map_collections["elevation"])
-    elevation_image = elevation.clip(geometry)
+    elevation = ee.Image(gee_map_collections["elevation"]).clip(geometry)
 
-    return elevation_image.rename("Elevation")
+    return elevation.rename("Elevation")
 
 
 def fetch_soil_organic_carbon(geometry):
@@ -90,12 +91,13 @@ def fetch_soil_organic_carbon(geometry):
         ee.Image or float: Soil organic carbon data clipped to the region or a specific value at a point.
     """
 
-    soil_organic_carbon = ee.Image(gee_map_collections["soil_organic_carbon"]).select(
-        "mean_0_20"
+    soil_organic_carbon = (
+        ee.Image(gee_map_collections["soil_organic_carbon"])
+        .select("mean_0_20")
+        .clip(geometry)
     )
-    soil_organic_carbon = soil_organic_carbon.clip(geometry)
 
-    return soil_organic_carbon
+    return soil_organic_carbon.rename("Soil Organic Carbon")
 
 
 def fetch_world_cover(geometry):
@@ -274,7 +276,7 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
     # Retrieve the mean soil moisture value at the point
     soil_moisture_value = (
         mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=1000)
-        .get("sm_rootzone")
+        .get("mean_soil_moisture_root_zone")
         .getInfo()
     )
     return soil_moisture_value if soil_moisture_value is not None else 0
@@ -288,7 +290,7 @@ def get_precipitation_point(lat, lon, start_date, end_date):
         total_precipitation_image.reduceRegion(
             reducer=ee.Reducer.first(), geometry=point, scale=100
         )
-        .get("TotalPrecipitation")
+        .get("total_precipitation")
         .getInfo()
     )
 
