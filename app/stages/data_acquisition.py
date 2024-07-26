@@ -77,7 +77,7 @@ def fetch_elevation(geometry):
 
     elevation = ee.Image(gee_map_collections["elevation"]).clip(geometry)
 
-    return elevation.rename("Elevation")
+    return elevation.rename("elevation")
 
 
 def fetch_soil_organic_carbon(geometry):
@@ -97,7 +97,7 @@ def fetch_soil_organic_carbon(geometry):
         .clip(geometry)
     )
 
-    return soil_organic_carbon.rename("Soil Organic Carbon")
+    return soil_organic_carbon.rename("soil_organic_carbon")
 
 
 def fetch_world_cover(geometry):
@@ -110,10 +110,11 @@ def fetch_world_cover(geometry):
     Returns:
         ee.Image: The world cover image for the specified region.
     """
-    world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"])
-    world_cover = world_cover.clip(geometry)
+    world_cover = ee.Image(gee_map_collections["world_type_terrain_cover"]).clip(
+        geometry
+    )
 
-    return world_cover
+    return world_cover.rename("world_cover")
 
 
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
@@ -128,8 +129,7 @@ def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
         ee.Image: The mean root zone soil moisture image for the specified period.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    mean_soil_moisture_image = fetch_mean_soil_moisture((start_date, end_date), roi)
-    return mean_soil_moisture_image
+    return fetch_mean_soil_moisture((start_date, end_date), roi)
 
 
 def get_precipitation_region(roi_coords, start_date, end_date):
@@ -159,8 +159,7 @@ def get_elevation_region(roi_coords):
         ee.Image: The elevation image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    elevation_image = fetch_elevation(roi)
-    return elevation_image
+    return fetch_elevation(roi)
 
 
 def get_slope_region(roi_coords):
@@ -174,8 +173,7 @@ def get_slope_region(roi_coords):
         ee.Image: The slope image for the specified region.
     """
     elevation = get_elevation_region(roi_coords)
-    slope = ee.Terrain.slope(elevation)
-    return slope
+    return ee.Terrain.slope(elevation)
 
 
 def get_soil_organic_carbon(roi_coords):
@@ -189,8 +187,7 @@ def get_soil_organic_carbon(roi_coords):
         ee.Image: The soil organic carbon image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    soc_0_20cm = fetch_soil_organic_carbon(roi)
-    return soc_0_20cm
+    return fetch_soil_organic_carbon(roi)
 
 
 def get_world_cover(roi_coords):
@@ -204,9 +201,7 @@ def get_world_cover(roi_coords):
         ee.Image: The world cover image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-
-    worldCover_clipped = fetch_world_cover(roi)
-    return worldCover_clipped
+    return fetch_world_cover(roi)
 
 
 def get_afforestation_candidates(roi_coords, start_date, end_date):
@@ -323,7 +318,7 @@ def get_elevation_point(lat, lon):
 
     elevation_value = (
         elevation_image.reduceRegion(ee.Reducer.first(), point, scale=10)
-        .get("Elevation")
+        .get("elevation")
         .getInfo()
     )
 
@@ -352,9 +347,9 @@ def get_world_cover_point(lat, lon):
             geometry=point,
             scale=10,
         )
-        .get("Map")
+        .get("world_cover")
         .getInfo()
-    )  # 'Map' is the band name
+    )
 
     class_names = {
         10: "Tree Cover",

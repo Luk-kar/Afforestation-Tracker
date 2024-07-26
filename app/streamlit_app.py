@@ -87,7 +87,7 @@ map_data = {
     "world_cover": {
         "data": get_world_cover(roi["roi_coords"]),
         "vis_params": {
-            "bands": ["Map"],
+            "bands": ["world_cover"],
             "min": 10,
             "max": 100,
             "palette": [
