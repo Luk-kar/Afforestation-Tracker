@@ -139,32 +139,6 @@ def fetch_world_cover_data(geometry):
     return world_cover.rename("world_cover")
 
 
-def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
-    """
-    Fetches and evaluates environmental conditions for afforestation suitability.
-
-    Parameters:
-        geometry (ee.Geometry): Geometry object representing a point or region.
-        start_date (str): The start date for precipitation data.
-        end_date (str): The end date for precipitation data.
-
-    Returns:
-        dict: Dictionary containing the evaluations of slope, precipitation, soil moisture, and land cover.
-    """
-    # TODO make much harsher conditions
-
-    results = {
-        "is_suitable_slope": slope.lt(15),
-        "suitable_precipitation": precipitation.gte(200),
-        "suitable_moisture": soil_moisture.select("mean_soil_moisture_root_zone").gte(
-            0.2
-        ),
-        "grassland": world_cover.eq(30),
-        "barrenland": world_cover.eq(60),
-    }
-    return results
-
-
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
     """
     Retrieves the mean root zone soil moisture for a specified date range.
@@ -252,7 +226,7 @@ def get_world_cover_region(roi_coords):
     return fetch_world_cover_data(roi)
 
 
-def get_afforestation_candidates_region(roi_coords, start_date, end_date):
+def get_afforestation_candidates_region(roi_coords, periods):
     """
     Retrieves candidate regions for afforestation based on environmental criteria such as
     soil moisture, precipitation, slope, and world cover.
@@ -265,23 +239,29 @@ def get_afforestation_candidates_region(roi_coords, start_date, end_date):
     Returns:
         ee.Image: Image showing areas suitable for afforestation.
     """
+    # TODO display_map_point_info and get_afforestation_candidates_region common logic
+    rainy_season = periods["soil_moisture"]
+    year = periods["precipitation"]
 
     # Fetch environmental data for the specified region and date range
     slope = get_slope_region(roi_coords)
-    precipitation_annual = get_precipitation_region(roi_coords, start_date, end_date)
+    precipitation_annual = get_precipitation_region(
+        roi_coords, year["start_date"], year["end_date"]
+    )
     soil_moisture_rainy_season = get_rootzone_soil_moisture_region(
-        roi_coords, "2020-06-01", "2020-10-01"
+        roi_coords, rainy_season["start_date"], rainy_season["end_date"]
     )
     world_cover = get_world_cover_region(roi_coords)
 
     # Define criteria for selecting candidate regions
     suitable_slope = slope.lt(15)  # Less than 15 degrees
     suitable_precipitation = precipitation_annual.gte(200)  # Greater than 200 mm
-    suitable_soil_moisture = soil_moisture_rainy_season.gte(0.1)  # => to 10%
+    suitable_soil_moisture = soil_moisture_rainy_season.gte(0.1)  # x => 10%
     suitable_hydration = suitable_precipitation.And(suitable_soil_moisture)
     vegetation_mask = world_cover.eq(30).Or(
         world_cover.eq(60)
     )  # Only Grassland or Barren land
+    # TODO map legend_dict common logic
 
     # Combine all conditions
     candidate_regions = suitable_slope.And(suitable_hydration).And(vegetation_mask)

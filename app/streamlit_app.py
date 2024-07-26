@@ -36,12 +36,14 @@ roi_coords = [
     [15.0, 8.0],
     [-5.0, 12.0],
     [-10.0, 13.0],
-]
+]  # Sahel geo-polygon
 
 roi = {
     "roi_coords": roi_coords,
-    "soil_moisture": {"start_date": "2020-06-01", "end_date": "2020-10-01"},
-    "precipitation": {"start_date": "2023-01-01", "end_date": "2023-12-31"},
+    "periods": {
+        "soil_moisture": {"start_date": "2020-06-01", "end_date": "2020-10-01"},
+        "precipitation": {"start_date": "2023-01-01", "end_date": "2023-12-31"},
+    },
 }
 
 map_data = {
@@ -106,6 +108,7 @@ map_data = {
         "name": "World Cover",
         "legend": {
             "title": "World Cover",
+            # TODO map legend_dict common logic
             "legend_dict": {
                 "Tree Cover": "006400",
                 "Shrubland": "FFBB22",
@@ -143,8 +146,8 @@ map_data = {
     "soil_moisture": {
         "data": get_rootzone_soil_moisture_region(
             roi["roi_coords"],
-            roi["soil_moisture"]["start_date"],
-            roi["soil_moisture"]["end_date"],
+            roi["periods"]["soil_moisture"]["start_date"],
+            roi["periods"]["soil_moisture"]["end_date"],
         ),
         "vis_params": {
             "min": 0.0,
@@ -165,8 +168,8 @@ map_data = {
     "precipitation": {
         "data": get_precipitation_region(
             roi["roi_coords"],
-            roi["precipitation"]["start_date"],
-            roi["precipitation"]["end_date"],
+            roi["periods"]["precipitation"]["start_date"],
+            roi["periods"]["precipitation"]["end_date"],
         ),
         "vis_params": {
             "min": 0,
@@ -204,8 +207,7 @@ map_data = {
     "afforestation_candidates": {
         "data": get_afforestation_candidates_region(
             roi["roi_coords"],
-            roi["precipitation"]["start_date"],
-            roi["precipitation"]["end_date"],
+            roi["periods"],
         ),
         "vis_params": {
             "min": 0,
@@ -252,6 +254,8 @@ def calculalte_center(roi_coords):
 
 
 def generate_legend_html(map_data):
+    # TODO refactor html content
+    # TODO moveable legend
     """Generate HTML content for displaying legends based on map data."""
     # Enhanced layout: Include a bottom margin for each legend block
     html_content = "<div style='margin-top: 20px; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: start;'>"
@@ -309,37 +313,39 @@ def display_map_point_info(map_result, roi):
         get_rootzone_soil_moisture_point(
             lat,
             lon,
-            roi["soil_moisture"]["start_date"],
-            roi["soil_moisture"]["end_date"],
+            roi["periods"]["soil_moisture"]["start_date"],
+            roi["periods"]["soil_moisture"]["end_date"],
         )
         * 100
     )
     precipitation = get_precipitation_point(
         lat,
         lon,
-        roi["precipitation"]["start_date"],
-        roi["precipitation"]["end_date"],
+        roi["periods"]["precipitation"]["start_date"],
+        roi["periods"]["precipitation"]["end_date"],
     )
 
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
     address = get_address_from_coordinates(lat, lon)
 
-    # afforestation validation
+    # Afforestation validation
+    # TODO display_map_point_info and get_afforestation_candidates_region common logic
     valid_slope = slope <= 15.0
     hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
+    # TODO map legend_dict common logic
     valid_cover = world_cover in ["Grassland", "Bare / Sparse Vegetation"]
 
     afforestation_bool = valid_slope and hydration_criteria and valid_cover
 
-    # text formatting
+    # Text formatting
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
     afforestation_yes_no = "Yes" if afforestation_bool else "No"
     slope_rounded = round(slope, 1)
     precipitation_rounded = round(precipitation, 2)
     soil_moisture_rounded = round(soil_moisture, 2)
 
-    # text display
+    # Text display
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
     Address: {address}\n
