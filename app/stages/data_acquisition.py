@@ -13,7 +13,7 @@ gee_map_collections = {
 }
 
 
-def fetch_mean_soil_moisture(date_range, geometry):
+def fetch_mean_soil_moisture_data(date_range, geometry):
     """
     Fetches and computes the mean soil moisture over a given date range and geographical area.
 
@@ -39,7 +39,7 @@ def fetch_mean_soil_moisture(date_range, geometry):
     return mean_soil_moisture.rename("mean_soil_moisture_root_zone")
 
 
-def fetch_total_precipitation(date_range, geometry):
+def fetch_total_precipitation_data(date_range, geometry):
     """
     Fetches and computes the total precipitation over a given date range and geographical area.
 
@@ -64,7 +64,7 @@ def fetch_total_precipitation(date_range, geometry):
     return total_precipitation.rename("total_precipitation")
 
 
-def fetch_elevation(geometry):
+def fetch_elevation_data(geometry):
     """
     Fetches and computes the elevation data over a given date range and geographical area.
 
@@ -80,7 +80,7 @@ def fetch_elevation(geometry):
     return elevation.rename("elevation")
 
 
-def fetch_slope(geometry):
+def fetch_slope_data(geometry):
     """
     Fetches and computes the slope data over a given date range and geographical area.
 
@@ -102,7 +102,7 @@ def fetch_slope(geometry):
     return slope.rename("slope")
 
 
-def fetch_soil_organic_carbon(geometry):
+def fetch_soil_organic_carbon_data(geometry):
     """
     Fetches and processes the soil organic carbon data for a given geometry, which can be a point or a region.
 
@@ -122,7 +122,7 @@ def fetch_soil_organic_carbon(geometry):
     return soil_organic_carbon.rename("soil_organic_carbon")
 
 
-def fetch_world_cover(geometry):
+def fetch_world_cover_data(geometry):
     """
     Retrieves the world cover data for the specified region of interest.
 
@@ -139,7 +139,7 @@ def fetch_world_cover(geometry):
     return world_cover.rename("world_cover")
 
 
-def fetch_and_evaluate_conditions(geometry, start_date, end_date):
+def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
     """
     Fetches and evaluates environmental conditions for afforestation suitability.
 
@@ -151,10 +151,12 @@ def fetch_and_evaluate_conditions(geometry, start_date, end_date):
     Returns:
         dict: Dictionary containing the evaluations of slope, precipitation, soil moisture, and land cover.
     """
-    slope = fetch_slope(geometry)
-    precipitation = fetch_total_precipitation((start_date, end_date), geometry)
-    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), geometry)
-    world_cover = fetch_world_cover(geometry)
+    slope = fetch_slope_data(geometry)
+    precipitation = fetch_total_precipitation_data((start_date, end_date), geometry)
+    soil_moisture = fetch_mean_soil_moisture_data(
+        ("2020-01-01", "2020-01-10"), geometry
+    )
+    world_cover = fetch_world_cover_data(geometry)
 
     results = {
         "is_suitable_slope": slope.lt(15),
@@ -180,7 +182,7 @@ def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
         ee.Image: The mean root zone soil moisture image for the specified period.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_mean_soil_moisture((start_date, end_date), roi)
+    return fetch_mean_soil_moisture_data((start_date, end_date), roi)
 
 
 def get_precipitation_region(roi_coords, start_date, end_date):
@@ -196,7 +198,7 @@ def get_precipitation_region(roi_coords, start_date, end_date):
         ee.Image: The total precipitation image for the specified period.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_total_precipitation((start_date, end_date), roi)
+    return fetch_total_precipitation_data((start_date, end_date), roi)
 
 
 def get_elevation_region(roi_coords):
@@ -210,7 +212,7 @@ def get_elevation_region(roi_coords):
         ee.Image: The elevation image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_elevation(roi)
+    return fetch_elevation_data(roi)
 
 
 def get_slope_region(roi_coords):
@@ -224,7 +226,7 @@ def get_slope_region(roi_coords):
         ee.Image: The slope image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_slope(roi)
+    return fetch_slope_data(roi)
 
 
 def get_soil_organic_carbon_region(roi_coords):
@@ -238,7 +240,7 @@ def get_soil_organic_carbon_region(roi_coords):
         ee.Image: The soil organic carbon image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_soil_organic_carbon(roi)
+    return fetch_soil_organic_carbon_data(roi)
 
 
 def get_world_cover_region(roi_coords):
@@ -252,7 +254,7 @@ def get_world_cover_region(roi_coords):
         ee.Image: The world cover image for the specified region.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_world_cover(roi)
+    return fetch_world_cover_data(roi)
 
 
 def get_afforestation_candidates_region(roi_coords, start_date, end_date):
@@ -268,7 +270,7 @@ def get_afforestation_candidates_region(roi_coords, start_date, end_date):
         ee.Image: The candidate regions for afforestation.
     """
     roi = ee.Geometry.Polygon(roi_coords)
-    conditions = fetch_and_evaluate_conditions(roi, start_date, end_date)
+    conditions = fetch_and_evaluate_conditions_data(roi, start_date, end_date)
 
     vegetation_mask = conditions["grassland"].Or(conditions["barrenland"])
     hydration_criteria = conditions["suitable_precip"].Or(
@@ -295,7 +297,9 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
         float: Average soil moisture value at the given point for the specified date range, or 0 if no data is available.
     """
     point = ee.Geometry.Point([lon, lat])
-    mean_soil_moisture_image = fetch_mean_soil_moisture((start_date, end_date), point)
+    mean_soil_moisture_image = fetch_mean_soil_moisture_data(
+        (start_date, end_date), point
+    )
 
     soil_moisture_value = (
         mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=1000)
@@ -308,7 +312,9 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
 def get_precipitation_point(lat, lon, start_date, end_date):
 
     point = ee.Geometry.Point([lon, lat])
-    total_precipitation_image = fetch_total_precipitation((start_date, end_date), point)
+    total_precipitation_image = fetch_total_precipitation_data(
+        (start_date, end_date), point
+    )
 
     precipitation_value = (
         total_precipitation_image.reduceRegion(
@@ -342,7 +348,7 @@ def get_soil_organic_carbon_point(lat, lon):
 def get_elevation_point(lat, lon):
 
     point = ee.Geometry.Point([lon, lat])
-    elevation_image = fetch_elevation(point)
+    elevation_image = fetch_elevation_data(point)
 
     elevation_value = (
         elevation_image.reduceRegion(ee.Reducer.first(), point, scale=10)
@@ -357,7 +363,7 @@ def get_slope_point(lat, lon):
 
     point = ee.Geometry.Point([lon, lat])
 
-    slope = fetch_slope(point)
+    slope = fetch_slope_data(point)
 
     slope_value = (
         slope.reduceRegion(
@@ -374,7 +380,7 @@ def get_slope_point(lat, lon):
 
 def get_world_cover_point(lat, lon):
     point = ee.Geometry.Point([lon, lat])
-    world_cover = fetch_world_cover(point)
+    world_cover = fetch_world_cover_data(point)
 
     world_cover_value = (
         world_cover.reduceRegion(
@@ -406,24 +412,25 @@ def get_world_cover_point(lat, lon):
 def get_afforestation_candidates_point(lat, lon, start_date, end_date):
 
     point = ee.Geometry.Point([lon, lat])
-    conditions = fetch_and_evaluate_conditions(point, start_date, end_date)
+    conditions = fetch_and_evaluate_conditions_data(point, start_date, end_date)
+    scale = 30
 
     is_suitable_land = (
         conditions["grassland"]
         .Or(conditions["barrenland"])
-        .reduceRegion(ee.Reducer.first(), point, 30)
+        .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
     )
 
     if (
         conditions["is_suitable_slope"]
-        .reduceRegion(ee.Reducer.first(), point, 30)
+        .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
         and conditions["suitable_precip"]
-        .reduceRegion(ee.Reducer.first(), point, 30)
+        .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
         and conditions["suitable_moisture"]
-        .reduceRegion(ee.Reducer.first(), point, 30)
+        .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
         and is_suitable_land
     ):
