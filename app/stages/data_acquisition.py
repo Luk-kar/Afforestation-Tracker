@@ -156,7 +156,7 @@ def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
     slope = fetch_slope_data(geometry)
     precipitation = fetch_total_precipitation_data((start_date, end_date), geometry)
     soil_moisture = fetch_mean_soil_moisture_data(
-        ("2020-01-01", "2020-01-10"), geometry
+        ("2020-06-01", "2020-10-01"), geometry
     )
     world_cover = fetch_world_cover_data(geometry)
 
@@ -429,9 +429,7 @@ def get_afforestation_candidates_point(lat, lon, start_date, end_date):
 
     is_hydration_criteria = (
         conditions["suitable_precip"]
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-        or conditions["suitable_moisture"]
+        .Or(conditions["suitable_moisture"])
         .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
     )
