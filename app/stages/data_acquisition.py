@@ -80,6 +80,28 @@ def fetch_elevation(geometry):
     return elevation.rename("elevation")
 
 
+def fetch_slope(geometry):
+    """
+    Fetches and computes the slope data over a given date range and geographical area.
+
+    Parameters:
+        geometry (ee.Geometry): The geographic area for the slope calculation.
+
+    Returns:
+        ee.Image: An image representing the slope over the specified area.
+    """
+    elevation = ee.Image(gee_map_collections["elevation"])
+
+    # Check if geometry is a point and handle accordingly
+    # Expand the region slightly around the point for reliable slope calculation
+    if geometry.type().getInfo() == "Point":
+        buffer_distance = 30
+        geometry = geometry.buffer(buffer_distance)
+
+    slope = ee.Terrain.slope(elevation.clip(geometry))
+    return slope.rename("slope")
+
+
 def fetch_soil_organic_carbon(geometry):
     """
     Fetches and processes the soil organic carbon data for a given geometry, which can be a point or a region.
@@ -115,6 +137,35 @@ def fetch_world_cover(geometry):
     )
 
     return world_cover.rename("world_cover")
+
+
+def fetch_and_evaluate_conditions(geometry, start_date, end_date):
+    """
+    Fetches and evaluates environmental conditions for afforestation suitability.
+
+    Parameters:
+        geometry (ee.Geometry): Geometry object representing a point or region.
+        start_date (str): The start date for precipitation data.
+        end_date (str): The end date for precipitation data.
+
+    Returns:
+        dict: Dictionary containing the evaluations of slope, precipitation, soil moisture, and land cover.
+    """
+    slope = fetch_slope(geometry)
+    precipitation = fetch_total_precipitation((start_date, end_date), geometry)
+    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), geometry)
+    world_cover = fetch_world_cover(geometry)
+
+    results = {
+        "is_suitable_slope": slope.lt(15),
+        "suitable_precip": precipitation.gte(200),
+        "suitable_moisture": soil_moisture.select("mean_soil_moisture_root_zone").gte(
+            0.1
+        ),
+        "grassland": world_cover.eq(30),
+        "barrenland": world_cover.eq(60),
+    }
+    return results
 
 
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
@@ -172,8 +223,8 @@ def get_slope_region(roi_coords):
     Returns:
         ee.Image: The slope image for the specified region.
     """
-    elevation = get_elevation_region(roi_coords)
-    return ee.Terrain.slope(elevation)
+    roi = ee.Geometry.Polygon(roi_coords)
+    return fetch_slope(roi)
 
 
 def get_soil_organic_carbon_region(roi_coords):
@@ -217,22 +268,15 @@ def get_afforestation_candidates_region(roi_coords, start_date, end_date):
         ee.Image: The candidate regions for afforestation.
     """
     roi = ee.Geometry.Polygon(roi_coords)
+    conditions = fetch_and_evaluate_conditions(roi, start_date, end_date)
 
-    elevation = fetch_elevation(roi)
-    slope = ee.Terrain.slope(elevation)
-    precipitation = fetch_total_precipitation((start_date, end_date), roi)
-    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), roi)
-    world_cover = fetch_world_cover(roi)
-
-    suitable_slope = slope.lt(15)
-    suitable_precip = precipitation.gte(200)
-    suitable_moisture = soil_moisture.select("mean_soil_moisture_root_zone").gte(0.1)
-    grassland = world_cover.eq(30)
-    barrenland = world_cover.eq(60)
-    vegetation_mask = grassland.Or(barrenland)
-    hydration_criteria = suitable_precip.Or(suitable_moisture)
-
-    candidate_regions = hydration_criteria.And(suitable_slope).And(vegetation_mask)
+    vegetation_mask = conditions["grassland"].Or(conditions["barrenland"])
+    hydration_criteria = conditions["suitable_precip"].Or(
+        conditions["suitable_moisture"]
+    )
+    candidate_regions = hydration_criteria.And(conditions["is_suitable_slope"]).And(
+        vegetation_mask
+    )
 
     return candidate_regions
 
@@ -313,10 +357,19 @@ def get_slope_point(lat, lon):
 
     point = ee.Geometry.Point([lon, lat])
 
-    elevation = ee.Image(gee_map_collections["elevation"])
-    slope = ee.Terrain.slope(elevation)
+    # elevation = ee.Image(gee_map_collections["elevation"])
+    # slope = ee.Terrain.slope(elevation)
+    slope = fetch_slope(point)
 
-    slope_value = slope.sample(point, 30).first().get("slope").getInfo()
+    slope_value = (
+        slope.reduceRegion(
+            reducer=ee.Reducer.first(),
+            geometry=point,
+            scale=30,
+        )
+        .get("slope")
+        .getInfo()
+    )
 
     return slope_value
 
@@ -353,49 +406,27 @@ def get_world_cover_point(lat, lon):
 
 
 def get_afforestation_candidates_point(lat, lon, start_date, end_date):
+
     point = ee.Geometry.Point([lon, lat])
+    conditions = fetch_and_evaluate_conditions(point, start_date, end_date)
 
-    elevation = fetch_elevation(point)
-    slope = ee.Terrain.slope(elevation)
-    precipitation = fetch_total_precipitation((start_date, end_date), point)
-    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), point)
-    world_cover = fetch_world_cover(point)
-
-    # Calculate conditions using reduceRegion
-    is_suitable_slope = (
-        slope.lt(15).reduceRegion(ee.Reducer.first(), point, 30).get("slope").getInfo()
-        is not None
-    )
-    is_good_precip = (
-        precipitation.gte(200)
+    is_suitable_land = (
+        conditions["grassland"]
+        .Or(conditions["barrenland"])
         .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("total_precipitation")
-        .getInfo()
-        >= 200
-    )
-    is_suitable_moisture = (
-        soil_moisture.gte(0.1)
-        .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("mean_soil_moisture_root_zone")
-        .getInfo()
-        >= 0.1
-    )
-    world_cover_value = (
-        world_cover.reduceRegion(ee.Reducer.first(), point, 30)
-        .get("world_cover")
         .getInfo()
     )
 
-    # Check land cover
-    is_grassland = world_cover_value == 30
-    is_barrenland = world_cover_value == 60
-    is_suitable_land = is_grassland or is_barrenland
-
-    # Final check for afforestation candidate
     if (
-        is_suitable_slope
-        and is_good_precip
-        and is_suitable_moisture
+        conditions["is_suitable_slope"]
+        .reduceRegion(ee.Reducer.first(), point, 30)
+        .getInfo()
+        and conditions["suitable_precip"]
+        .reduceRegion(ee.Reducer.first(), point, 30)
+        .getInfo()
+        and conditions["suitable_moisture"]
+        .reduceRegion(ee.Reducer.first(), point, 30)
+        .getInfo()
         and is_suitable_land
     ):
         return "Suitable for Afforestation"
