@@ -162,7 +162,7 @@ def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
 
     results = {
         "is_suitable_slope": slope.lt(15),
-        "suitable_precip": precipitation.gte(200),
+        "suitable_precipitation": precipitation.gte(200),
         "suitable_moisture": soil_moisture.select("mean_soil_moisture_root_zone").gte(
             0.2
         ),
@@ -276,7 +276,7 @@ def get_afforestation_candidates_region(roi_coords, start_date, end_date):
 
     vegetation_mask = conditions["grassland"].Or(conditions["barrenland"])
 
-    hydration_criteria = conditions["suitable_precip"].Or(
+    hydration_criteria = conditions["suitable_precipitation"].Or(
         conditions["suitable_moisture"]
     )
 
@@ -428,7 +428,7 @@ def get_afforestation_candidates_point(lat, lon, start_date, end_date):
     )
 
     is_hydration_criteria = (
-        conditions["suitable_precip"]
+        conditions["suitable_precipitation"]
         .Or(conditions["suitable_moisture"])
         .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
