@@ -21,7 +21,6 @@ from stages.data_acquisition import (
     get_elevation_point,
     get_slope_point,
     get_world_cover_point,
-    get_afforestation_candidates_point,
     get_address_from_coordinates,
 )
 
@@ -304,7 +303,8 @@ def display_map_point_info(map_result, roi):
 
     # Fetch data for each attribute
     elevation = get_elevation_point(lat, lon)
-    slope = round(get_slope_point(lat, lon), 1)
+    slope = get_slope_point(lat, lon)
+    slope = round(slope, 1) if slope is not None else None
     soil_moisture = round(
         get_rootzone_soil_moisture_point(
             lat,
@@ -326,8 +326,12 @@ def display_map_point_info(map_result, roi):
 
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
-    afforestation_candidate = get_afforestation_candidates_point(
-        lat, lon, "2020-01-01", "2020-12-31"
+    afforestation_candidate = (
+        slope <= 15.0
+        if slope is not None
+        else None
+        and (soil_moisture >= 0.2 or precipitation >= 200.0)
+        and (world_cover in ["grassland", "barrenland"])
     )
     address = get_address_from_coordinates(lat, lon)
 
@@ -335,13 +339,14 @@ def display_map_point_info(map_result, roi):
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
 
     # Build the result string with formatted display
+
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
     Address: {address}\n
-    Afforestation Candidate: {afforestation_candidate}\n
+    Afforestation Candidate: {"Yes" if afforestation_candidate else "No"}\n
     Elevation: {elevation} meters,
     Slope: {slope}°,
-    Root Zone Soil Moisture: {soil_moisture} %,
+    Root Zone Soil Moisture: {soil_moisture * 100} %,
     Precipitation: {precipitation} mm,
     Soil Organic Carbon: {soil_organic_carbon} g/kg,
     World Cover: {world_cover}

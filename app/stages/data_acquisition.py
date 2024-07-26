@@ -414,37 +414,6 @@ def get_world_cover_point(lat, lon):
     return class_names.get(world_cover_value, "Unknown Cover")
 
 
-def get_afforestation_candidates_point(lat, lon, start_date, end_date):
-
-    point = ee.Geometry.Point([lon, lat])
-    conditions = fetch_and_evaluate_conditions_data(point, start_date, end_date)
-    scale = 30
-
-    is_suitable_land_cover = (
-        conditions["grassland"]
-        .Or(conditions["barrenland"])
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-    )
-
-    is_hydration_criteria = (
-        conditions["suitable_precipitation"]
-        .Or(conditions["suitable_moisture"])
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-    )
-
-    is_suitable_slope = (
-        conditions["is_suitable_slope"]
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-    )
-    if is_suitable_land_cover and is_hydration_criteria and is_suitable_slope:
-        return "Suitable for Afforestation"
-    else:
-        return "Not Suitable for Afforestation"
-
-
 def get_address_from_coordinates(lat, lon):
     """Fetch address from Nominatim Geocoding API using latitude and longitude."""
     base_url = "https://nominatim.openstreetmap.org/reverse"
