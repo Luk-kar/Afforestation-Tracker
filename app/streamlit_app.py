@@ -303,8 +303,7 @@ def display_map_point_info(map_result, roi):
 
     # Fetch data for each attribute
     elevation = get_elevation_point(lat, lon)
-    slope = get_slope_point(lat, lon)
-    slope = round(slope, 1) if slope is not None else None
+    slope = round(get_slope_point(lat, lon), 1)
     soil_moisture = round(
         get_rootzone_soil_moisture_point(
             lat,
@@ -324,9 +323,9 @@ def display_map_point_info(map_result, roi):
         ),
         2,
     )
-
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
+    address = get_address_from_coordinates(lat, lon)
 
     valid_slope = slope <= 15.0
     hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
@@ -334,15 +333,13 @@ def display_map_point_info(map_result, roi):
 
     afforestation_candidate = valid_slope and hydration_criteria and valid_cover
 
-    address = get_address_from_coordinates(lat, lon)
-
-    # Round latitude and longitude for display
+    afforestation_yes_no = "Yes" if afforestation_candidate else "No"
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
 
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
     Address: {address}\n
-    Afforestation Candidate: **{"Yes" if afforestation_candidate else "No"}**\n
+    Afforestation Candidate: **{afforestation_yes_no}**\n
     Elevation: {elevation} meters,
     Slope: {slope}°,
     Root Zone Soil Moisture: {soil_moisture} %,
