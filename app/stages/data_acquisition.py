@@ -357,8 +357,6 @@ def get_slope_point(lat, lon):
 
     point = ee.Geometry.Point([lon, lat])
 
-    # elevation = ee.Image(gee_map_collections["elevation"])
-    # slope = ee.Terrain.slope(elevation)
     slope = fetch_slope(point)
 
     slope_value = (
