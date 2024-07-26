@@ -299,56 +299,60 @@ def display_map(map_data, roi_coords):
 
 def display_map_point_info(map_result, roi):
 
+    # Data for point
     lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
 
     # Fetch data for each attribute
     elevation = get_elevation_point(lat, lon)
-    slope = round(get_slope_point(lat, lon), 1)
-    soil_moisture = round(
+    slope = get_slope_point(lat, lon)
+    soil_moisture = (
         get_rootzone_soil_moisture_point(
             lat,
             lon,
             roi["soil_moisture"]["start_date"],
             roi["soil_moisture"]["end_date"],
         )
-        * 100,
-        2,
+        * 100
     )
-    precipitation = round(
-        get_precipitation_point(
-            lat,
-            lon,
-            roi["precipitation"]["start_date"],
-            roi["precipitation"]["end_date"],
-        ),
-        2,
+    precipitation = get_precipitation_point(
+        lat,
+        lon,
+        roi["precipitation"]["start_date"],
+        roi["precipitation"]["end_date"],
     )
+
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
     address = get_address_from_coordinates(lat, lon)
 
+    # afforestation validation
     valid_slope = slope <= 15.0
     hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
     valid_cover = world_cover in ["Grassland", "Bare / Sparse Vegetation"]
 
-    afforestation_candidate = valid_slope and hydration_criteria and valid_cover
+    afforestation_bool = valid_slope and hydration_criteria and valid_cover
 
-    afforestation_yes_no = "Yes" if afforestation_candidate else "No"
+    # text formatting
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
+    afforestation_yes_no = "Yes" if afforestation_bool else "No"
+    slope_rounded = round(slope, 1)
+    precipitation_rounded = round(precipitation, 2)
+    soil_moisture_rounded = round(soil_moisture, 2)
 
+    # text display
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
     Address: {address}\n
     Afforestation Candidate: **{afforestation_yes_no}**\n
     Elevation: {elevation} meters,
-    Slope: {slope}°,
-    Root Zone Soil Moisture: {soil_moisture} %,
-    Precipitation: {precipitation} mm,
+    Slope: {slope_rounded}°,
+    Root Zone Soil Moisture: {soil_moisture_rounded} %,
+    Precipitation: {precipitation_rounded} mm,
     Soil Organic Carbon: {soil_organic_carbon} g/kg,
     World Cover: {world_cover}
     """
 
-    if afforestation_candidate:
+    if afforestation_bool:
         st.success(result)
     else:
         st.error(result)  # no success
