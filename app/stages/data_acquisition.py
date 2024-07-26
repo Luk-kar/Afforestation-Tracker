@@ -151,6 +151,8 @@ def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
     Returns:
         dict: Dictionary containing the evaluations of slope, precipitation, soil moisture, and land cover.
     """
+    # TODO make much harsher conditions
+
     slope = fetch_slope_data(geometry)
     precipitation = fetch_total_precipitation_data((start_date, end_date), geometry)
     soil_moisture = fetch_mean_soil_moisture_data(
@@ -162,7 +164,7 @@ def fetch_and_evaluate_conditions_data(geometry, start_date, end_date):
         "is_suitable_slope": slope.lt(15),
         "suitable_precip": precipitation.gte(200),
         "suitable_moisture": soil_moisture.select("mean_soil_moisture_root_zone").gte(
-            0.1
+            0.2
         ),
         "grassland": world_cover.eq(30),
         "barrenland": world_cover.eq(60),
@@ -273,12 +275,14 @@ def get_afforestation_candidates_region(roi_coords, start_date, end_date):
     conditions = fetch_and_evaluate_conditions_data(roi, start_date, end_date)
 
     vegetation_mask = conditions["grassland"].Or(conditions["barrenland"])
+
     hydration_criteria = conditions["suitable_precip"].Or(
         conditions["suitable_moisture"]
     )
-    candidate_regions = hydration_criteria.And(conditions["is_suitable_slope"]).And(
-        vegetation_mask
-    )
+
+    is_not_steep = conditions["is_suitable_slope"]
+
+    candidate_regions = hydration_criteria.And(is_not_steep).And(vegetation_mask)
 
     return candidate_regions
 
@@ -392,6 +396,7 @@ def get_world_cover_point(lat, lon):
         .getInfo()
     )
 
+    # TODO export logic to the display
     class_names = {
         10: "Tree Cover",
         20: "Shrubland",
@@ -415,25 +420,28 @@ def get_afforestation_candidates_point(lat, lon, start_date, end_date):
     conditions = fetch_and_evaluate_conditions_data(point, start_date, end_date)
     scale = 30
 
-    is_suitable_land = (
+    is_suitable_land_cover = (
         conditions["grassland"]
         .Or(conditions["barrenland"])
         .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
     )
 
-    if (
+    is_hydration_criteria = (
+        conditions["suitable_precip"]
+        .reduceRegion(ee.Reducer.first(), point, scale)
+        .getInfo()
+        or conditions["suitable_moisture"]
+        .reduceRegion(ee.Reducer.first(), point, scale)
+        .getInfo()
+    )
+
+    is_suitable_slope = (
         conditions["is_suitable_slope"]
         .reduceRegion(ee.Reducer.first(), point, scale)
         .getInfo()
-        and conditions["suitable_precip"]
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-        and conditions["suitable_moisture"]
-        .reduceRegion(ee.Reducer.first(), point, scale)
-        .getInfo()
-        and is_suitable_land
-    ):
+    )
+    if is_suitable_land_cover and is_hydration_criteria and is_suitable_slope:
         return "Suitable for Afforestation"
     else:
         return "Not Suitable for Afforestation"

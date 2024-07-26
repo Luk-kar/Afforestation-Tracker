@@ -211,7 +211,7 @@ map_data = {
         "vis_params": {
             "min": 0,
             "max": 1,
-            "palette": ["red", "green"],
+            "palette": ["green", "red"],
         },
         "name": "Planting Zones",
         "legend": {
