@@ -176,7 +176,7 @@ def get_slope_region(roi_coords):
     return ee.Terrain.slope(elevation)
 
 
-def get_soil_organic_carbon(roi_coords):
+def get_soil_organic_carbon_region(roi_coords):
     """
     Retrieves the soil organic carbon data for the specified region of interest.
 
@@ -190,7 +190,7 @@ def get_soil_organic_carbon(roi_coords):
     return fetch_soil_organic_carbon(roi)
 
 
-def get_world_cover(roi_coords):
+def get_world_cover_region(roi_coords):
     """
     Retrieves the world cover data for the specified region of interest.
 
@@ -204,7 +204,7 @@ def get_world_cover(roi_coords):
     return fetch_world_cover(roi)
 
 
-def get_afforestation_candidates(roi_coords, start_date, end_date):
+def get_afforestation_candidates_region(roi_coords, start_date, end_date):
     """
     Identifies candidate regions for afforestation based on multiple criteria.
 
@@ -218,39 +218,23 @@ def get_afforestation_candidates(roi_coords, start_date, end_date):
     """
     roi = ee.Geometry.Polygon(roi_coords)
 
-    chirpsYear = (
-        ee.ImageCollection(gee_map_collections["precipitation"])
-        .filterDate(start_date, end_date)
-        .filterBounds(roi)
-    )
-    annualPrecipitation = chirpsYear.sum()
-    elevation = get_elevation_region(roi_coords)
+    elevation = fetch_elevation(roi)
     slope = ee.Terrain.slope(elevation)
+    precipitation = fetch_total_precipitation((start_date, end_date), roi)
+    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), roi)
+    world_cover = fetch_world_cover(roi)
 
-    filteredMoistureDataset = (
-        ee.ImageCollection(gee_map_collections["rootzone_soil_moisture"])
-        .filterDate("2020-01-01", "2020-01-10")
-        .filterBounds(roi)
-    )
+    suitable_slope = slope.lt(15)
+    suitable_precip = precipitation.gte(200)
+    suitable_moisture = soil_moisture.select("mean_soil_moisture_root_zone").gte(0.1)
+    grassland = world_cover.eq(30)
+    barrenland = world_cover.eq(60)
+    vegetation_mask = grassland.Or(barrenland)
+    hydration_criteria = suitable_precip.Or(suitable_moisture)
 
-    soilMoistureRootZone = filteredMoistureDataset.select("sm_rootzone")
-    suitableSlope = slope.lt(15)
+    candidate_regions = hydration_criteria.And(suitable_slope).And(vegetation_mask)
 
-    suitableMoisture = soilMoistureRootZone.mean().gte(0.1)
-
-    candidateRegions = (
-        annualPrecipitation.gte(200).Or(suitableMoisture).And(suitableSlope)
-    )
-
-    worldCover = get_world_cover(roi_coords)
-    grassland = worldCover.eq(30)  # Grassland class in ESA WorldCover
-    barrenland = worldCover.eq(60)  # Barrenland class in ESA WorldCover
-    vegetationMask = grassland.Or(barrenland)
-
-    # Apply the mask to the candidate regions
-    afforestationCandidates = candidateRegions.And(vegetationMask)
-
-    return afforestationCandidates
+    return candidate_regions
 
 
 def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
@@ -268,7 +252,7 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
     """
     point = ee.Geometry.Point([lon, lat])
     mean_soil_moisture_image = fetch_mean_soil_moisture((start_date, end_date), point)
-    # Retrieve the mean soil moisture value at the point
+
     soil_moisture_value = (
         mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=1000)
         .get("mean_soil_moisture_root_zone")
@@ -278,6 +262,7 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
 
 
 def get_precipitation_point(lat, lon, start_date, end_date):
+
     point = ee.Geometry.Point([lon, lat])
     total_precipitation_image = fetch_total_precipitation((start_date, end_date), point)
 
@@ -293,20 +278,19 @@ def get_precipitation_point(lat, lon, start_date, end_date):
 
 
 def get_soil_organic_carbon_point(lat, lon):
+
     point = ee.Geometry.Point([lon, lat])
-    # Load the specific image which represents soil organic carbon
     soil_organic_carbon = ee.Image(gee_map_collections["soil_organic_carbon"])
 
-    # Use reduceRegion instead of sample to extract the value from the image
     carbon_value = (
         soil_organic_carbon.reduceRegion(
-            reducer=ee.Reducer.first(),  # Using first() reducer to get the value
+            reducer=ee.Reducer.first(),
             geometry=point,
-            scale=30,  # The scale should match the resolution at which the data is meaningful
+            scale=30,
         )
         .get("mean_0_20")
         .getInfo()
-    )  # Ensure the correct band name is used
+    )
 
     return carbon_value
 
@@ -371,21 +355,11 @@ def get_world_cover_point(lat, lon):
 def get_afforestation_candidates_point(lat, lon, start_date, end_date):
     point = ee.Geometry.Point([lon, lat])
 
-    # Load necessary datasets
-    elevation = ee.Image(gee_map_collections["elevation"])
+    elevation = fetch_elevation(point)
     slope = ee.Terrain.slope(elevation)
-    chirps = (
-        ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
-        .filterDate(start_date, end_date)
-        .sum()
-    )
-    soil_moisture = (
-        ee.ImageCollection("NASA/SMAP/SPL4SMGP/007")
-        .filterDate("2020-01-01", "2020-01-10")  # Adjust dates as needed
-        .select("sm_rootzone")
-        .mean()
-    )
-    worldCover = ee.Image("ESA/WorldCover/v100/2020")
+    precipitation = fetch_total_precipitation((start_date, end_date), point)
+    soil_moisture = fetch_mean_soil_moisture(("2020-01-01", "2020-01-10"), point)
+    world_cover = fetch_world_cover(point)
 
     # Calculate conditions using reduceRegion
     is_suitable_slope = (
@@ -393,21 +367,23 @@ def get_afforestation_candidates_point(lat, lon, start_date, end_date):
         is not None
     )
     is_good_precip = (
-        chirps.gte(200)
+        precipitation.gte(200)
         .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("precipitation")
+        .get("total_precipitation")
         .getInfo()
         >= 200
     )
     is_suitable_moisture = (
         soil_moisture.gte(0.1)
         .reduceRegion(ee.Reducer.first(), point, 30)
-        .get("sm_rootzone")
+        .get("mean_soil_moisture_root_zone")
         .getInfo()
         >= 0.1
     )
     world_cover_value = (
-        worldCover.reduceRegion(ee.Reducer.first(), point, 30).get("Map").getInfo()
+        world_cover.reduceRegion(ee.Reducer.first(), point, 30)
+        .get("world_cover")
+        .getInfo()
     )
 
     # Check land cover

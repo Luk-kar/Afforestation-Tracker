@@ -12,9 +12,9 @@ from stages.data_acquisition import (
     get_precipitation_region,
     get_elevation_region,
     get_slope_region,
-    get_soil_organic_carbon,
-    get_world_cover,
-    get_afforestation_candidates,
+    get_soil_organic_carbon_region,
+    get_world_cover_region,
+    get_afforestation_candidates_region,
     get_rootzone_soil_moisture_point,
     get_precipitation_point,
     get_soil_organic_carbon_point,
@@ -85,7 +85,7 @@ map_data = {
         },
     },
     "world_cover": {
-        "data": get_world_cover(roi["roi_coords"]),
+        "data": get_world_cover_region(roi["roi_coords"]),
         "vis_params": {
             "bands": ["world_cover"],
             "min": 10,
@@ -123,7 +123,7 @@ map_data = {
         },
     },
     "soc_0_20cm": {
-        "data": get_soil_organic_carbon(roi["roi_coords"]),
+        "data": get_soil_organic_carbon_region(roi["roi_coords"]),
         "vis_params": {
             "min": 0,
             "max": 200,
@@ -203,7 +203,7 @@ map_data = {
         },
     },
     "afforestation_candidates": {
-        "data": get_afforestation_candidates(
+        "data": get_afforestation_candidates_region(
             roi["roi_coords"],
             roi["precipitation"]["start_date"],
             roi["precipitation"]["end_date"],
