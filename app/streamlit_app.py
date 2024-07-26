@@ -329,7 +329,7 @@ def display_map_point_info(map_result, roi):
 
     valid_slope = slope <= 15.0
     hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
-    valid_cover = world_cover in ["Grassland", "Barrenland"]
+    valid_cover = world_cover in ["Grassland", "Bare / Sparse Vegetation"]
 
     afforestation_candidate = valid_slope and hydration_criteria and valid_cover
 
