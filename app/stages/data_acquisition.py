@@ -95,7 +95,7 @@ def fetch_slope_data(geometry):
     # Check if geometry is a point and handle accordingly
     # Expand the region slightly around the point for reliable slope calculation
     if geometry.type().getInfo() == "Point":
-        buffer_distance = 30
+        buffer_distance = 100
         geometry = geometry.buffer(buffer_distance)
 
     slope = ee.Terrain.slope(elevation.clip(geometry))
@@ -328,7 +328,7 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
     )
 
     soil_moisture_value = (
-        mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=1000)
+        mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=100)
         .get("mean_soil_moisture_root_zone")
         .getInfo()
     )
@@ -362,7 +362,7 @@ def get_soil_organic_carbon_point(lat, lon):
         soil_organic_carbon.reduceRegion(
             reducer=ee.Reducer.first(),
             geometry=point,
-            scale=30,
+            scale=100,
         )
         .get("mean_0_20")
         .getInfo()
@@ -393,9 +393,9 @@ def get_slope_point(lat, lon):
 
     slope_value = (
         slope.reduceRegion(
-            reducer=ee.Reducer.first(),
+            reducer=ee.Reducer.mean(),
             geometry=point,
-            scale=30,
+            scale=100,
         )
         .get("slope")
         .getInfo()
@@ -412,7 +412,7 @@ def get_world_cover_point(lat, lon):
         world_cover.reduceRegion(
             reducer=ee.Reducer.first(),
             geometry=point,
-            scale=10,
+            scale=100,
         )
         .get("world_cover")
         .getInfo()

@@ -210,7 +210,7 @@ map_data = {
         "vis_params": {
             "min": 0,
             "max": 1,
-            "palette": ["green", "red"],
+            "palette": ["red", "green"],
         },
         "name": "Planting Zones",
         "legend": {
@@ -328,9 +328,9 @@ def display_map_point_info(map_result, roi):
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
 
-    valid_slope = slope is not None and slope <= 15.0
-    hydration_criteria = soil_moisture >= 20.0 or precipitation >= 200.0
-    valid_cover = world_cover in ["grassland", "barrenland"]
+    valid_slope = slope <= 15.0
+    hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
+    valid_cover = world_cover in ["Grassland", "Barrenland"]
 
     afforestation_candidate = valid_slope and hydration_criteria and valid_cover
 
@@ -338,8 +338,6 @@ def display_map_point_info(map_result, roi):
 
     # Round latitude and longitude for display
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
-
-    # Build the result string with formatted display
 
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
