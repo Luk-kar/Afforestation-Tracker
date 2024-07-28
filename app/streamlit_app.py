@@ -8,17 +8,21 @@ from stages.visualization import (
     display_map_point_info,
     display_map_legend,
 )
+from stages.data_acquisition.point import get_map_point_data
+
 from config import map_data_regions, roi_coords, roi
 
 # Initialize the Earth Engine module
 establish_connection()
 
 folium_map = display_map(map_data_regions, roi_coords)
-
 map_result = st_folium(folium_map)
 
-# Show elevation on click
+# Show on click
 if map_result["last_clicked"]:
-    display_map_point_info(map_result, roi)
+
+    lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
+    point_data = get_map_point_data(roi, lat, lon)
+    display_map_point_info(point_data)
 
 display_map_legend(map_data_regions)

@@ -11,6 +11,7 @@ from stages.data_acquisition.gee_server import (
     fetch_slope_data,
     fetch_world_cover_data,
 )
+from stages.data_categorization import evaluate_afforestation_candidates
 
 
 def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
@@ -146,3 +147,36 @@ def get_address_from_point(lat, lon):
             return "No address found."
     else:
         return "Error in Geocoding API call."
+
+
+def get_map_point_data(roi, lat, lon):
+
+    data = {
+        "elevation": get_elevation_point(lat, lon),
+        "slope": get_slope_point(lat, lon),
+        "soil_moisture": get_rootzone_soil_moisture_point(
+            lat,
+            lon,
+            roi["periods"]["soil_moisture"]["start_date"],
+            roi["periods"]["soil_moisture"]["end_date"],
+        ),
+        "precipitation": get_precipitation_point(
+            lat,
+            lon,
+            roi["periods"]["precipitation"]["start_date"],
+            roi["periods"]["precipitation"]["end_date"],
+        ),
+        "soil_organic_carbon": get_soil_organic_carbon_point(lat, lon),
+        "world_cover": get_world_cover_point(lat, lon),
+        "address": get_address_from_point(lat, lon),
+        "lat": lat,
+        "lon": lon,
+    }
+
+    data["afforestation_validation"] = evaluate_afforestation_candidates(
+        data["slope"],
+        data["precipitation"],
+        data["soil_moisture"],
+        data["world_cover"],
+    )
+    return data

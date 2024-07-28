@@ -5,7 +5,7 @@ import streamlit as st
 from folium.plugins import MousePosition
 import streamlit.components.v1 as components
 
-# Initialize the Earth Engine module
+# Local
 from stages.data_categorization import evaluate_afforestation_candidates
 from stages.data_acquisition.point import (
     get_rootzone_soil_moisture_point,
@@ -171,15 +171,10 @@ def display_map(map_data, roi_coords):
     return Map
 
 
-def display_map_point_info(map_result, roi):
-    # Data for point
-    lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
-
-    # Fetch data for each attribute
-    data = get_map_point_data(roi, lat, lon)
+def display_map_point_info(data):
 
     # Text formatting
-    lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
+    lat_rounded, lon_rounded = (round(data["lat"], 4), round(data["lon"], 4))
     afforestation_yes_no = "Yes" if data["afforestation_validation"] else "No"
     slope_rounded = round(data["slope"], 1)
     precipitation_rounded = round(data["precipitation"], 2)
@@ -202,37 +197,6 @@ def display_map_point_info(map_result, roi):
         st.success(result)
     else:
         st.error(result)
-
-
-def get_map_point_data(roi, lat, lon):
-
-    data = {
-        "elevation": get_elevation_point(lat, lon),
-        "slope": get_slope_point(lat, lon),
-        "soil_moisture": get_rootzone_soil_moisture_point(
-            lat,
-            lon,
-            roi["periods"]["soil_moisture"]["start_date"],
-            roi["periods"]["soil_moisture"]["end_date"],
-        ),
-        "precipitation": get_precipitation_point(
-            lat,
-            lon,
-            roi["periods"]["precipitation"]["start_date"],
-            roi["periods"]["precipitation"]["end_date"],
-        ),
-        "soil_organic_carbon": get_soil_organic_carbon_point(lat, lon),
-        "world_cover": get_world_cover_point(lat, lon),
-        "address": get_address_from_point(lat, lon),
-    }
-
-    data["afforestation_validation"] = evaluate_afforestation_candidates(
-        data["slope"],
-        data["precipitation"],
-        data["soil_moisture"],
-        data["world_cover"],
-    )
-    return data
 
 
 def display_map_legend(map_data):
