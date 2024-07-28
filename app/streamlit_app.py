@@ -8,12 +8,12 @@ from stages.visualization import (
     display_map_point_info,
     display_map_legend,
 )
-from config import map_data, roi_coords, roi
+from config import map_data_regions, roi_coords, roi
 
 # Initialize the Earth Engine module
 establish_connection()
 
-folium_map = display_map(map_data, roi_coords)
+folium_map = display_map(map_data_regions, roi_coords)
 
 map_result = st_folium(folium_map)
 
@@ -21,4 +21,4 @@ map_result = st_folium(folium_map)
 if map_result["last_clicked"]:
     display_map_point_info(map_result, roi)
 
-display_map_legend(map_data)
+display_map_legend(map_data_regions)
