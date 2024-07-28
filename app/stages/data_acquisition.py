@@ -161,6 +161,75 @@ def fetch_world_cover_data(geometry):
     return world_cover.rename("world_cover")
 
 
+def fetch_suitable_for_afforestation_data(
+    slope, precipitation, soil_moisture, world_cover
+):
+    """
+    Evaluates environmental criteria to determine suitability for afforestation using either Earth Engine objects or scalar values.
+
+    Args:
+    slope (float or ee.Image): Slope of the land.
+    precipitation (float or ee.Image): Precipitation amount.
+    soil_moisture (float or ee.Image): Soil moisture percentage.
+    world_cover (str or ee.Image): World cover category.
+
+    Returns:
+    bool or ee.Image: Whether the area is suitable for afforestation.
+    """
+
+    conditions = {
+        "slope": 15,
+        "precipitation": 200,
+        "moisture": 0.1,
+        "vegetation_mask": [
+            world_cover_esa_codes["Grassland"],
+            world_cover_esa_codes["Bare / Sparse Vegetation"],
+        ],
+    }
+
+    if (
+        isinstance(slope, ee.Image)
+        and isinstance(precipitation, ee.Image)
+        and isinstance(soil_moisture, ee.Image)
+        and isinstance(world_cover, ee.Image)
+    ):
+        # Earth Engine image logic
+        suitable_slope = slope.lt(conditions["slope"])
+        suitable_precipitation = precipitation.gte(conditions["precipitation"])
+        suitable_soil_moisture = soil_moisture.gte(
+            conditions["moisture"]
+        )  # Adjusting to a decimal for consistency
+        vegetation_mask = world_cover.eq(conditions["vegetation_mask"][0]).Or(
+            world_cover.eq(conditions["vegetation_mask"][1])
+        )
+
+        return (
+            suitable_slope.And(suitable_precipitation)
+            .And(suitable_soil_moisture)
+            .And(vegetation_mask)
+        )
+
+    elif (
+        isinstance(slope, (int, float))
+        and isinstance(precipitation, (int, float))
+        and isinstance(soil_moisture, (int, float))
+        and isinstance(world_cover, int)
+    ):
+        # Scalar logic
+        valid_slope = slope <= conditions["slope"]
+        hydration_criteria = (soil_moisture >= conditions["moisture"]) or (
+            precipitation >= conditions["precipitation"]
+        )
+        valid_cover = world_cover in [
+            world_cover_esa_codes["Grassland"],
+            world_cover_esa_codes["Bare / Sparse Vegetation"],
+        ]
+
+        return valid_slope and hydration_criteria and valid_cover
+    else:
+        raise TypeError("Invalid input types for afforestation data evaluation.")
+
+
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
     """
     Retrieves the mean root zone soil moisture for a specified date range.
@@ -261,7 +330,6 @@ def get_afforestation_candidates_region(roi_coords, periods):
     Returns:
         ee.Image: Image showing areas suitable for afforestation.
     """
-    # TODO display_map_point_info and get_afforestation_candidates_region common logic
     rainy_season = periods["soil_moisture"]
     year = periods["precipitation"]
 
@@ -275,19 +343,10 @@ def get_afforestation_candidates_region(roi_coords, periods):
     )
     world_cover = get_world_cover_region(roi_coords)
 
-    # Define criteria for selecting candidate regions
-    suitable_slope = slope.lt(15)  # Less than 15 degrees
-    suitable_precipitation = precipitation_annual.gte(200)  # Greater than 200 mm
-    suitable_soil_moisture = soil_moisture_rainy_season.gte(0.1)  # x => 10%
-    suitable_hydration = suitable_precipitation.And(suitable_soil_moisture)
-
-    grassland = world_cover_esa_codes["Grassland"]
-    barren_land = world_cover_esa_codes["Bare / Sparse Vegetation"]
-
-    vegetation_mask = world_cover.eq(grassland).Or(world_cover.eq(barren_land))
-
     # Combine all conditions
-    candidate_regions = suitable_slope.And(suitable_hydration).And(vegetation_mask)
+    candidate_regions = fetch_suitable_for_afforestation_data(
+        slope, precipitation_annual, soil_moisture_rainy_season, world_cover
+    )
 
     return candidate_regions
 

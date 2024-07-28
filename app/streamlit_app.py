@@ -10,6 +10,7 @@ import streamlit.components.v1 as components
 # Initialize the Earth Engine module
 from stages.connection import establish_connection
 from stages.data_acquisition import (
+    fetch_suitable_for_afforestation_data,
     get_rootzone_soil_moisture_region,
     get_precipitation_region,
     get_elevation_region,
@@ -253,7 +254,7 @@ def add_layer_to_map(Map, layer):
     # Update the vis_params to set the opacity (if the API supports it directly)
     # For Google Earth Engine's folium map, you can include 'opacity' as a key in vis_params.
     updated_vis_params = vis_params.copy()  # Make a copy to avoid mutating the original
-    updated_vis_params["opacity"] = 0.6  # Set opacity to 70%
+    updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
 
     Map.addLayer(data, updated_vis_params, name)
 
@@ -406,14 +407,11 @@ def display_map_point_info(map_result, roi):
     # Fetch data for each attribute
     elevation = get_elevation_point(lat, lon)
     slope = get_slope_point(lat, lon)
-    soil_moisture = (
-        get_rootzone_soil_moisture_point(
-            lat,
-            lon,
-            roi["periods"]["soil_moisture"]["start_date"],
-            roi["periods"]["soil_moisture"]["end_date"],
-        )
-        * 100
+    soil_moisture = get_rootzone_soil_moisture_point(
+        lat,
+        lon,
+        roi["periods"]["soil_moisture"]["start_date"],
+        roi["periods"]["soil_moisture"]["end_date"],
     )
     precipitation = get_precipitation_point(
         lat,
@@ -426,23 +424,16 @@ def display_map_point_info(map_result, roi):
     world_cover = get_world_cover_point(lat, lon)
     address = get_address_from_coordinates(lat, lon)
 
-    # Afforestation validation
-    # TODO display_map_point_info and get_afforestation_candidates_region common logic
-    valid_slope = slope <= 15.0
-    hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
-
-    grassland = world_cover_esa_codes["Grassland"]
-    barren_land = world_cover_esa_codes["Bare / Sparse Vegetation"]
-    valid_cover = world_cover in [grassland, barren_land]
-
-    afforestation_bool = valid_slope and hydration_criteria and valid_cover
+    afforestation_validation = fetch_suitable_for_afforestation_data(
+        slope, precipitation, soil_moisture, world_cover
+    )
 
     # Text formatting
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
-    afforestation_yes_no = "Yes" if afforestation_bool else "No"
+    afforestation_yes_no = "Yes" if afforestation_validation else "No"
     slope_rounded = round(slope, 1)
     precipitation_rounded = round(precipitation, 2)
-    soil_moisture_rounded = round(soil_moisture, 2)
+    soil_moisture_rounded = round(soil_moisture * 100, 2)
 
     # Text display
     result = f"""
@@ -457,7 +448,7 @@ def display_map_point_info(map_result, roi):
     World Cover: {world_cover}
     """
 
-    if afforestation_bool:
+    if afforestation_validation:
         st.success(result)
     else:
         st.error(result)  # no success
