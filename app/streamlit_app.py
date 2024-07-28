@@ -22,6 +22,7 @@ from stages.data_acquisition import (
     get_slope_point,
     get_world_cover_point,
     get_address_from_coordinates,
+    world_cover_esa_codes,
 )
 
 establish_connection()
@@ -333,8 +334,10 @@ def display_map_point_info(map_result, roi):
     # TODO display_map_point_info and get_afforestation_candidates_region common logic
     valid_slope = slope <= 15.0
     hydration_criteria = (soil_moisture >= 20.0) or (precipitation >= 200.0)
-    # TODO map legend_dict common logic
-    valid_cover = world_cover in ["Grassland", "Bare / Sparse Vegetation"]
+
+    grassland = world_cover_esa_codes["Grassland"]
+    barren_land = world_cover_esa_codes["Bare / Sparse Vegetation"]
+    valid_cover = world_cover in [grassland, barren_land]
 
     afforestation_bool = valid_slope and hydration_criteria and valid_cover
 

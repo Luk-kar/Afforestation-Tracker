@@ -2,6 +2,28 @@
 import requests
 import ee
 
+world_cover_esa_codes = {
+    "Tree Cover": 10,
+    "Shrubland": 20,
+    "Grassland": 30,
+    "Cropland": 40,
+    "Built-up": 50,
+    "Bare / Sparse Vegetation": 60,
+    "Snow and Ice": 70,
+    "Permanent Water Bodies": 80,
+    "Herbaceous Wetland": 90,
+    "Mangroves": 95,
+    "Moss and Lichen": 100,
+}
+
+
+def find_key_by_value(dictionary, value, default):
+    for key, val in dictionary.items():
+        if val == value:
+            return key
+    return default
+
+
 # Google Earth Engine Collections
 # All of the data is open-source, Google provides the server side computation
 gee_map_collections = {
@@ -258,10 +280,11 @@ def get_afforestation_candidates_region(roi_coords, periods):
     suitable_precipitation = precipitation_annual.gte(200)  # Greater than 200 mm
     suitable_soil_moisture = soil_moisture_rainy_season.gte(0.1)  # x => 10%
     suitable_hydration = suitable_precipitation.And(suitable_soil_moisture)
-    vegetation_mask = world_cover.eq(30).Or(
-        world_cover.eq(60)
-    )  # Only Grassland or Barren land
-    # TODO map legend_dict common logic
+
+    grassland = world_cover_esa_codes["Grassland"]
+    barren_land = world_cover_esa_codes["Bare / Sparse Vegetation"]
+
+    vegetation_mask = world_cover.eq(grassland).Or(world_cover.eq(barren_land))
 
     # Combine all conditions
     candidate_regions = suitable_slope.And(suitable_hydration).And(vegetation_mask)
@@ -378,22 +401,7 @@ def get_world_cover_point(lat, lon):
         .getInfo()
     )
 
-    # TODO export logic to the display
-    class_names = {
-        10: "Tree Cover",
-        20: "Shrubland",
-        30: "Grassland",
-        40: "Cropland",
-        50: "Built-up",
-        60: "Bare / Sparse Vegetation",
-        70: "Snow and Ice",
-        80: "Permanent Water Bodies",
-        90: "Herbaceous Wetland",
-        95: "Mangroves",
-        100: "Moss and Lichen",
-    }
-
-    return class_names.get(world_cover_value, "Unknown Cover")
+    return world_cover_value
 
 
 def get_address_from_coordinates(lat, lon):
