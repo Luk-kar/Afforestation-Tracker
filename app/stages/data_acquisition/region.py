@@ -9,8 +9,8 @@ from stages.data_acquisition.gee_server import (
     fetch_soil_organic_carbon_data,
     fetch_slope_data,
     fetch_world_cover_data,
-    fetch_suitable_for_afforestation_data,
 )
+from stages.data_categorization import evaluate_afforestation_candidates
 
 
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
@@ -113,6 +113,20 @@ def get_afforestation_candidates_region(roi_coords, periods):
     Returns:
         ee.Image: Image showing areas suitable for afforestation.
     """
+    slope, precipitation_annual, soil_moisture_rainy_season, world_cover = (
+        get_afforestation_candidates_data(roi_coords, periods)
+    )
+
+    # Combine all conditions
+    candidate_regions = evaluate_afforestation_candidates(
+        slope, precipitation_annual, soil_moisture_rainy_season, world_cover
+    )
+
+    return candidate_regions
+
+
+def get_afforestation_candidates_data(roi_coords, periods):
+
     rainy_season = periods["soil_moisture"]
     year = periods["precipitation"]
 
@@ -125,10 +139,4 @@ def get_afforestation_candidates_region(roi_coords, periods):
         roi_coords, rainy_season["start_date"], rainy_season["end_date"]
     )
     world_cover = get_world_cover_region(roi_coords)
-
-    # Combine all conditions
-    candidate_regions = fetch_suitable_for_afforestation_data(
-        slope, precipitation_annual, soil_moisture_rainy_season, world_cover
-    )
-
-    return candidate_regions
+    return slope, precipitation_annual, soil_moisture_rainy_season, world_cover

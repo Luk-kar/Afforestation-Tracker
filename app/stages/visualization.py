@@ -5,9 +5,7 @@ import streamlit as st
 from folium.plugins import MousePosition
 
 # Initialize the Earth Engine module
-from stages.data_acquisition.gee_server import (
-    fetch_suitable_for_afforestation_data,
-)
+from stages.data_categorization import evaluate_afforestation_candidates
 from stages.data_acquisition.point import (
     get_rootzone_soil_moisture_point,
     get_precipitation_point,
@@ -197,7 +195,7 @@ def display_map_point_info(map_result, roi):
     world_cover = get_world_cover_point(lat, lon)
     address = get_address_from_point(lat, lon)
 
-    afforestation_validation = fetch_suitable_for_afforestation_data(
+    afforestation_validation = evaluate_afforestation_candidates(
         slope, precipitation, soil_moisture, world_cover
     )
 
@@ -215,8 +213,8 @@ def display_map_point_info(map_result, roi):
     Afforestation Candidate: **{afforestation_yes_no}**\n
     Elevation: {elevation} meters,
     Slope: {slope_rounded}°,
-    Root Zone Soil Moisture: {soil_moisture_rounded} %,
-    Precipitation: {precipitation_rounded} mm,
+    Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
+    Yearly Precipitation: {precipitation_rounded} mm,
     Soil Organic Carbon: {soil_organic_carbon} g/kg,
     World Cover: {world_cover}
     """
