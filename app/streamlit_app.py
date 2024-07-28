@@ -5,6 +5,8 @@ import streamlit as st
 from folium.plugins import MousePosition
 from streamlit_folium import st_folium
 
+import streamlit.components.v1 as components
+
 # Initialize the Earth Engine module
 from stages.connection import establish_connection
 from stages.data_acquisition import (
@@ -109,7 +111,6 @@ map_data = {
         "name": "World Cover",
         "legend": {
             "title": "World Cover",
-            # TODO map legend_dict common logic
             "legend_dict": {
                 "Tree Cover": "006400",
                 "Shrubland": "FFBB22",
@@ -227,6 +228,23 @@ map_data = {
 }
 
 
+def validate_are_keys_the_same(dict1, dict2):
+    if set(dict1.keys()) != set(dict2.keys()):
+        missing_in_dict1 = set(dict2.keys()) - set(dict1.keys())
+        missing_in_dict2 = set(dict1.keys()) - set(dict2.keys())
+        error_message = "Dictionaries have mismatched keys.\n"
+        if missing_in_dict1:
+            error_message += f"Missing in dict1: {missing_in_dict1}\n"
+        if missing_in_dict2:
+            error_message += f"Missing in dict2: {missing_in_dict2}\n"
+        raise ValueError(error_message)
+
+
+validate_are_keys_the_same(
+    world_cover_esa_codes, map_data["world_cover"]["legend"]["legend_dict"]
+)
+
+
 def add_layer_to_map(Map, layer):
     data = layer["data"]
     vis_params = layer["vis_params"]
@@ -240,7 +258,7 @@ def add_layer_to_map(Map, layer):
     Map.addLayer(data, updated_vis_params, name)
 
 
-def calculalte_center(roi_coords):
+def calculate_center(roi_coords):
 
     # Calculate the centroid of the roi_coords to use as the center for the map
     lats = [coord[1] for coord in roi_coords]  # Extract all latitudes
@@ -255,26 +273,104 @@ def calculalte_center(roi_coords):
 
 
 def generate_legend_html(map_data):
-    # TODO refactor html content
-    # TODO moveable legend
     """Generate HTML content for displaying legends based on map data."""
-    # Enhanced layout: Include a bottom margin for each legend block
-    html_content = "<div style='margin-top: 20px; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: start;'>"
+    html_content = """
+    <style>
+        .scrollable-box {
+            height: 315px; /* Adjust height as needed */
+            overflow-x: scroll;
+            overflow-y: hidden;
+            white-space: nowrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: flex-start;
+        }
+        .draggable {
+            display: inline-block;
+            cursor: move;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: max-content;
+            margin-right: 10px;
+        }
+        .legend-title {
+            font-weight: bold;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .legend-color-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid grey;
+            margin-right: 5px;
+        }
+    </style>
+    <div class='scrollable-box'>
+    """
+
     for key, info in reversed(list(map_data.items())):
-        # Adding 'margin-bottom: 10px;' to each legend block to create space between rows
-        html_content += f"<div style='margin-right: 20px; margin-bottom: 30px;'><b>{info['legend']['title']}</b><br/>"
+        html_content += f"""
+        <div class='draggable' id='{key}_legend'>
+            <div class='legend-title'>{info['legend']['title']}</div>
+            <div class='legend-items'>
+        """
         legend = info.get("legend", {})
         if legend:
             for label, color in legend["legend_dict"].items():
-                html_content += f"<div style='display: flex; align-items: center; margin-top: 5px;'><div style='width: 20px; height: 20px; background-color: #{color}; border: 1px solid grey;'></div><span style='margin-left: 5px;'>{label}</span></div>"
-        html_content += "</div>"
+                html_content += f"""
+                <div class='legend-item'>
+                    <div class='legend-color-box' style='background-color: #{color};'></div>
+                    <span>{label}</span>
+                </div>
+                """
+        html_content += "</div></div>"
+
     html_content += "</div>"
+
+    html_content += """
+    <script>
+        document.querySelectorAll('.draggable').forEach(el => {
+            el.addEventListener('mousedown', function(e) {
+                let shiftX = e.clientX - el.getBoundingClientRect().left;
+                let shiftY = e.clientY - el.getBoundingClientRect().top;
+
+                function moveAt(pageX, pageY) {
+                    el.style.left = pageX - shiftX + 'px';
+                    el.style.top = pageY - shiftY + 'px';
+                }
+
+                function onMouseMove(e) {
+                    moveAt(e.pageX, e.pageY);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+
+                el.onmouseup = function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    el.onmouseup = null;
+                };
+
+                el.ondragstart = function() {
+                    return false;
+                };
+            });
+        });
+    </script>
+    """
+
     return html_content
 
 
 def display_map(map_data, roi_coords):
 
-    center = calculalte_center(roi_coords)
+    center = calculate_center(roi_coords)
 
     # Create the map centered at the calculated centroid
     Map = geemap.Map(center=center, zoom=3.0)
@@ -376,4 +472,6 @@ if map_result["last_clicked"]:
     display_map_point_info(map_result, roi)
 
 legends_html = generate_legend_html(map_data)
-st.markdown(legends_html, unsafe_allow_html=True)
+# st.markdown(legends_html, unsafe_allow_html=True)
+
+components.html(legends_html, height=400, scrolling=True)
