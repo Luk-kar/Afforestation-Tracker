@@ -31,20 +31,6 @@ def add_layer_to_map(Map, layer):
     Map.addLayer(data, updated_vis_params, name)
 
 
-def calculate_center(roi_coords):
-
-    # Calculate the centroid of the roi_coords to use as the center for the map
-    lats = [coord[1] for coord in roi_coords]  # Extract all latitudes
-    lngs = [coord[0] for coord in roi_coords]  # Extract all longitudes
-
-    # Calculate the average of latitudes and longitudes
-    center_lat = sum(lats) / len(lats)
-    center_lng = sum(lngs) / len(lngs)
-    center = (center_lat, center_lng)
-
-    return center
-
-
 def generate_map_legend_html(map_data):
     """Generate HTML content for displaying legends based on map data."""
     html_content = """
@@ -141,16 +127,17 @@ def generate_map_legend_html(map_data):
     return html_content
 
 
-def display_map(map_data, roi_coords):
+def display_map(data):
 
-    center = calculate_center(roi_coords)
+    maps = data["maps"]
+    center = data["center"]
 
     # Create the map centered at the calculated centroid
     Map = geemap.Map(center=center, zoom=3.0)
 
     Map.add_child(folium.LatLngPopup())
 
-    for layer in map_data.values():
+    for layer in maps.values():
         add_layer_to_map(Map, layer)
 
     formatter = "function(num) {return L.Util.formatNum(num, 3) + ' º ';};"

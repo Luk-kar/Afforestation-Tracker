@@ -157,6 +157,10 @@ def get_region_data(roi, map_data):
     """
     # Fetch and update each environmental layer in the map_data dictionary
 
+    data = {}
+
+    center = calculate_center(roi["roi_coords"])
+
     # Elevation
     map_data["elevation"]["data"] = get_elevation_region(roi["roi_coords"])
 
@@ -198,4 +202,21 @@ def get_region_data(roi, map_data):
             except ValueError as e:
                 print(f"Validation error in {key} layer: {str(e)}")
 
-    return map_data
+    data["center"] = center
+    data["maps"] = map_data
+
+    return data
+
+
+def calculate_center(roi_coords):
+
+    # Calculate the centroid of the roi_coords to use as the center for the map
+    lats = [coord[1] for coord in roi_coords]  # Extract all latitudes
+    lngs = [coord[0] for coord in roi_coords]  # Extract all longitudes
+
+    # Calculate the average of latitudes and longitudes
+    center_lat = sum(lats) / len(lats)
+    center_lng = sum(lngs) / len(lngs)
+    center = (center_lat, center_lng)
+
+    return center
