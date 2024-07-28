@@ -9,8 +9,11 @@ import streamlit.components.v1 as components
 
 # Initialize the Earth Engine module
 from stages.connection import establish_connection
-from stages.data_acquisition import (
+from stages.data_acquisition.gee_server import (
     fetch_suitable_for_afforestation_data,
+    world_cover_esa_codes,
+)
+from stages.data_acquisition.region import (
     get_rootzone_soil_moisture_region,
     get_precipitation_region,
     get_elevation_region,
@@ -18,14 +21,15 @@ from stages.data_acquisition import (
     get_soil_organic_carbon_region,
     get_world_cover_region,
     get_afforestation_candidates_region,
+)
+from stages.data_acquisition.point import (
     get_rootzone_soil_moisture_point,
     get_precipitation_point,
     get_soil_organic_carbon_point,
     get_elevation_point,
     get_slope_point,
     get_world_cover_point,
-    get_address_from_coordinates,
-    world_cover_esa_codes,
+    get_address_from_point,
 )
 
 establish_connection()
@@ -422,7 +426,7 @@ def display_map_point_info(map_result, roi):
 
     soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
     world_cover = get_world_cover_point(lat, lon)
-    address = get_address_from_coordinates(lat, lon)
+    address = get_address_from_point(lat, lon)
 
     afforestation_validation = fetch_suitable_for_afforestation_data(
         slope, precipitation, soil_moisture, world_cover
