@@ -3,6 +3,7 @@ import folium
 import geemap.foliumap as geemap
 import streamlit as st
 from folium.plugins import MousePosition
+import streamlit.components.v1 as components
 
 # Initialize the Earth Engine module
 from stages.data_categorization import evaluate_afforestation_candidates
@@ -44,7 +45,7 @@ def calculate_center(roi_coords):
     return center
 
 
-def generate_legend_html(map_data):
+def generate_map_legend_html(map_data):
     """Generate HTML content for displaying legends based on map data."""
     html_content = """
     <style>
@@ -171,55 +172,69 @@ def display_map(map_data, roi_coords):
 
 
 def display_map_point_info(map_result, roi):
-
     # Data for point
     lat, lon = map_result["last_clicked"]["lat"], map_result["last_clicked"]["lng"]
 
     # Fetch data for each attribute
-    elevation = get_elevation_point(lat, lon)
-    slope = get_slope_point(lat, lon)
-    soil_moisture = get_rootzone_soil_moisture_point(
-        lat,
-        lon,
-        roi["periods"]["soil_moisture"]["start_date"],
-        roi["periods"]["soil_moisture"]["end_date"],
-    )
-    precipitation = get_precipitation_point(
-        lat,
-        lon,
-        roi["periods"]["precipitation"]["start_date"],
-        roi["periods"]["precipitation"]["end_date"],
-    )
-
-    soil_organic_carbon = get_soil_organic_carbon_point(lat, lon)
-    world_cover = get_world_cover_point(lat, lon)
-    address = get_address_from_point(lat, lon)
-
-    afforestation_validation = evaluate_afforestation_candidates(
-        slope, precipitation, soil_moisture, world_cover
-    )
+    data = get_map_point_data(roi, lat, lon)
 
     # Text formatting
     lat_rounded, lon_rounded = (round(lat, 4), round(lon, 4))
-    afforestation_yes_no = "Yes" if afforestation_validation else "No"
-    slope_rounded = round(slope, 1)
-    precipitation_rounded = round(precipitation, 2)
-    soil_moisture_rounded = round(soil_moisture * 100, 2)
+    afforestation_yes_no = "Yes" if data["afforestation_validation"] else "No"
+    slope_rounded = round(data["slope"], 1)
+    precipitation_rounded = round(data["precipitation"], 2)
+    soil_moisture_rounded = round(data["soil_moisture"] * 100, 2)
 
     # Text display
     result = f"""
     Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
-    Address: {address}\n
+    Address: {data['address']}\n
     Afforestation Candidate: **{afforestation_yes_no}**\n
-    Elevation: {elevation} meters,
+    Elevation: {data['elevation']} meters,
     Slope: {slope_rounded}°,
     Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
     Yearly Precipitation: {precipitation_rounded} mm,
-    Soil Organic Carbon: {soil_organic_carbon} g/kg,
-    World Cover: {world_cover}
+    Soil Organic Carbon: {data['soil_organic_carbon']} g/kg,
+    World Cover: {data['world_cover']}
     """
 
-    if afforestation_validation:
+    if data["afforestation_validation"]:
         st.success(result)
     else:
-        st.error(result)  # no success
+        st.error(result)
+
+
+def get_map_point_data(roi, lat, lon):
+
+    data = {
+        "elevation": get_elevation_point(lat, lon),
+        "slope": get_slope_point(lat, lon),
+        "soil_moisture": get_rootzone_soil_moisture_point(
+            lat,
+            lon,
+            roi["periods"]["soil_moisture"]["start_date"],
+            roi["periods"]["soil_moisture"]["end_date"],
+        ),
+        "precipitation": get_precipitation_point(
+            lat,
+            lon,
+            roi["periods"]["precipitation"]["start_date"],
+            roi["periods"]["precipitation"]["end_date"],
+        ),
+        "soil_organic_carbon": get_soil_organic_carbon_point(lat, lon),
+        "world_cover": get_world_cover_point(lat, lon),
+        "address": get_address_from_point(lat, lon),
+    }
+
+    data["afforestation_validation"] = evaluate_afforestation_candidates(
+        data["slope"],
+        data["precipitation"],
+        data["soil_moisture"],
+        data["world_cover"],
+    )
+    return data
+
+
+def display_map_legend(map_data):
+    legends_html = generate_map_legend_html(map_data)
+    components.html(legends_html, height=400, scrolling=True)
