@@ -5,18 +5,6 @@ import streamlit as st
 from folium.plugins import MousePosition
 import streamlit.components.v1 as components
 
-# Local
-from stages.data_categorization import evaluate_afforestation_candidates
-from stages.data_acquisition.point import (
-    get_rootzone_soil_moisture_point,
-    get_precipitation_point,
-    get_soil_organic_carbon_point,
-    get_elevation_point,
-    get_slope_point,
-    get_world_cover_point,
-    get_address_from_point,
-)
-
 
 def add_layer_to_map(Map, layer):
     data = layer["data"]
