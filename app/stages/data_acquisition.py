@@ -180,27 +180,34 @@ def fetch_suitable_for_afforestation_data(
     conditions = {
         "slope": 15,
         "precipitation": 200,
-        "moisture": 0.1,
-        "vegetation_mask": [
-            world_cover_esa_codes["Grassland"],
-            world_cover_esa_codes["Bare / Sparse Vegetation"],
-        ],
+        "moisture": 0.2,
+        "vegetation_mask": {
+            "grassland": world_cover_esa_codes["Grassland"],
+            "barren_land": world_cover_esa_codes["Bare / Sparse Vegetation"],
+        },
     }
 
-    if (
+    is_google_earth_engine_types = (
         isinstance(slope, ee.Image)
         and isinstance(precipitation, ee.Image)
         and isinstance(soil_moisture, ee.Image)
         and isinstance(world_cover, ee.Image)
-    ):
+    )
+
+    is_primitive_values_types = (
+        (isinstance(slope, (int, float)) or slope is None)
+        and isinstance(precipitation, (int, float))
+        and isinstance(soil_moisture, (int, float))
+        and isinstance(world_cover, int)
+    )
+
+    if is_google_earth_engine_types:
         # Earth Engine image logic
         suitable_slope = slope.lt(conditions["slope"])
         suitable_precipitation = precipitation.gte(conditions["precipitation"])
-        suitable_soil_moisture = soil_moisture.gte(
-            conditions["moisture"]
-        )  # Adjusting to a decimal for consistency
-        vegetation_mask = world_cover.eq(conditions["vegetation_mask"][0]).Or(
-            world_cover.eq(conditions["vegetation_mask"][1])
+        suitable_soil_moisture = soil_moisture.gte(conditions["moisture"])
+        vegetation_mask = world_cover.eq(conditions["vegetation_mask"]["grassland"]).Or(
+            world_cover.eq(conditions["vegetation_mask"]["barren_land"])
         )
 
         return (
@@ -209,25 +216,27 @@ def fetch_suitable_for_afforestation_data(
             .And(vegetation_mask)
         )
 
-    elif (
-        isinstance(slope, (int, float))
-        and isinstance(precipitation, (int, float))
-        and isinstance(soil_moisture, (int, float))
-        and isinstance(world_cover, int)
-    ):
+    elif is_primitive_values_types:
         # Scalar logic
         valid_slope = slope <= conditions["slope"]
         hydration_criteria = (soil_moisture >= conditions["moisture"]) or (
             precipitation >= conditions["precipitation"]
         )
         valid_cover = world_cover in [
-            world_cover_esa_codes["Grassland"],
-            world_cover_esa_codes["Bare / Sparse Vegetation"],
+            conditions["vegetation_mask"]["grassland"],
+            conditions["vegetation_mask"]["barren_land"],
         ]
 
         return valid_slope and hydration_criteria and valid_cover
+
     else:
-        raise TypeError("Invalid input types for afforestation data evaluation.")
+        raise TypeError(
+            "Invalid input types for afforestation data evaluation:\n"
+            f"slope: {slope} {isinstance(slope, (int, float))} \n"
+            f"precipitation: {precipitation} {isinstance(precipitation, (int, float))}\n"
+            f"soil_moisture: {soil_moisture} {isinstance(soil_moisture, (int, float))}\n"
+            f"world_covers: {world_cover} {isinstance(world_cover, int)}\n"
+        )
 
 
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
@@ -442,6 +451,12 @@ def get_slope_point(lat, lon):
         .get("slope")
         .getInfo()
     )
+
+    # Assign a default value of 0
+    # if no elevation variation is detected in the area,
+    # which results in a 'None' slope value.
+    if slope_value is None:
+        slope_value = 0
 
     return slope_value
 
