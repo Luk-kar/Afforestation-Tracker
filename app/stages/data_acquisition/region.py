@@ -11,6 +11,10 @@ from stages.data_acquisition.gee_server import (
     fetch_world_cover_data,
 )
 from stages.data_categorization import evaluate_afforestation_candidates
+from stages.data_acquisition.gee_server import (
+    world_cover_esa_codes,
+)
+from utils import validate_are_keys_the_same
 
 
 def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
@@ -140,3 +144,58 @@ def get_afforestation_candidates_data(roi_coords, periods):
     )
     world_cover = get_world_cover_region(roi_coords)
     return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
+
+
+def get_region_data(roi, map_data):
+    """
+    Enrich the map data dictionary with additional environmental data layers for the specified region of interest.
+
+    Parameters:
+        roi (dict): Dictionary containing the region of interest coordinates and periods for data fetching.
+        map_data (dict): Dictionary containing the current map data layers to be enriched.
+
+    """
+    # Fetch and update each environmental layer in the map_data dictionary
+
+    # Elevation
+    map_data["elevation"]["data"] = get_elevation_region(roi["roi_coords"])
+
+    # Slope
+    map_data["slope"]["data"] = get_slope_region(roi["roi_coords"])
+
+    # World Cover
+    map_data["world_cover"]["data"] = get_world_cover_region(roi["roi_coords"])
+
+    # Soil Organic Carbon
+    map_data["soc_0_20cm"]["data"] = get_soil_organic_carbon_region(roi["roi_coords"])
+
+    # Soil Moisture
+    map_data["soil_moisture"]["data"] = get_rootzone_soil_moisture_region(
+        roi["roi_coords"],
+        roi["periods"]["soil_moisture"]["start_date"],
+        roi["periods"]["soil_moisture"]["end_date"],
+    )
+
+    # Precipitation
+    map_data["precipitation"]["data"] = get_precipitation_region(
+        roi["roi_coords"],
+        roi["periods"]["precipitation"]["start_date"],
+        roi["periods"]["precipitation"]["end_date"],
+    )
+
+    # Afforestation Candidates
+    map_data["afforestation_candidates"]["data"] = get_afforestation_candidates_region(
+        roi["roi_coords"], roi["periods"]
+    )
+
+    # Validate that all layers have matching keys in their legend dicts
+    for key, layer in map_data.items():
+        if "legend" in layer and "legend_dict" in layer["legend"]:
+            try:
+                validate_are_keys_the_same(
+                    world_cover_esa_codes, layer["legend"]["legend_dict"]
+                )
+            except ValueError as e:
+                print(f"Validation error in {key} layer: {str(e)}")
+
+    return map_data
