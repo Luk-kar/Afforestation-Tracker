@@ -1,3 +1,7 @@
+"""
+This module contains functions to retrieve data for a specific point on the map.
+"""
+
 # Third party
 import requests
 import ee
@@ -14,7 +18,9 @@ from stages.data_acquisition.gee_server import (
 from stages.data_categorization import evaluate_afforestation_candidates
 
 
-def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
+def get_rootzone_soil_moisture_point(
+    lat: float, lon: float, start_date: str, end_date: str
+) -> float:
     """
     Retrieves the mean soil moisture value at a specific point for a specified date range.
 
@@ -25,7 +31,8 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
         end_date (str): The end date for the period of interest in 'YYYY-MM-DD' format.
 
     Returns:
-        float: Average soil moisture value at the given point for the specified date range, or 0 if no data is available.
+        float: Average soil moisture value at the given point for the specified date range,
+        or 0 if no data is available.
     """
     point = ee.Geometry.Point([lon, lat])
     mean_soil_moisture_image = fetch_mean_soil_moisture_data(
@@ -40,7 +47,22 @@ def get_rootzone_soil_moisture_point(lat, lon, start_date, end_date):
     return soil_moisture_value if soil_moisture_value is not None else 0
 
 
-def get_precipitation_point(lat, lon, start_date, end_date):
+def get_precipitation_point(
+    lat: float, lon: float, start_date: str, end_date: str
+) -> float:
+    """
+    Retrieves the total precipitation value at a specific point for a specified date range.
+
+    Parameters:
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+        start_date (str): The start date for the period of interest in 'YYYY-MM-DD' format.
+        end_date (str): The end date for the period of interest in 'YYYY-MM-DD'
+
+    Returns:
+        float: Total precipitation value at the given point for the specified date range,
+        or 0 if no data is available.
+    """
 
     point = ee.Geometry.Point([lon, lat])
     total_precipitation_image = fetch_total_precipitation_data(
@@ -58,7 +80,17 @@ def get_precipitation_point(lat, lon, start_date, end_date):
     return precipitation_value
 
 
-def get_soil_organic_carbon_point(lat, lon):
+def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
+    """
+    Retrieves the soil organic carbon value at a specific point.
+
+    Parameters:
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        float: Soil organic carbon value at the given point, or 0 if no data is available.
+    """
 
     point = ee.Geometry.Point([lon, lat])
     soil_organic_carbon = fetch_soil_organic_carbon_data(point)
@@ -76,7 +108,18 @@ def get_soil_organic_carbon_point(lat, lon):
     return carbon_value
 
 
-def get_elevation_point(lat, lon):
+def get_elevation_point(lat: float, lon: float) -> float:
+    """
+    Retrieves the elevation value at a specific point.
+
+    Parameters:
+
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        float: Elevation value at the given point, or 0 if no data is available.
+    """
 
     point = ee.Geometry.Point([lon, lat])
     elevation_image = fetch_elevation_data(point)
@@ -90,7 +133,17 @@ def get_elevation_point(lat, lon):
     return elevation_value
 
 
-def get_slope_point(lat, lon):
+def get_slope_point(lat: float, lon: float) -> float:
+    """
+    Retrieves the slope value at a specific point.
+
+    Parameters:
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        float: Slope value at the given point, or 0 if no data is available.
+    """
 
     point = ee.Geometry.Point([lon, lat])
 
@@ -115,7 +168,18 @@ def get_slope_point(lat, lon):
     return slope_value
 
 
-def get_world_cover_point(lat, lon):
+def get_world_cover_point(lat: float, lon: float) -> str:
+    """
+    Retrieves the world cover value at a specific point.
+
+    Parameters:
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        str: World cover value at the given point, or 'No data available' if no data is available.
+    """
+
     point = ee.Geometry.Point([lon, lat])
     world_cover = fetch_world_cover_data(point)
 
@@ -132,12 +196,24 @@ def get_world_cover_point(lat, lon):
     return world_cover_value
 
 
-def get_address_from_point(lat, lon):
-    """Fetch address from Nominatim Geocoding API using latitude and longitude."""
+def get_address_from_point(lat: float, lon: float) -> str:
+    """
+    Fetch address from Nominatim Geocoding API using latitude and longitude.
+
+    Parameters:
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        str: Address of the given point, or 'No address found.' if no address is available.
+    """
+
     base_url = "https://nominatim.openstreetmap.org/reverse"
     headers = {"User-Agent": "MyApp"}
     params = {"lat": lat, "lon": lon, "format": "json"}
-    response = requests.get(base_url, params=params, headers=headers)
+
+    response = requests.get(base_url, params=params, headers=headers, timeout=10)
+
     if response.status_code == 200:
         json_result = response.json()
         address = json_result.get("display_name")
@@ -149,7 +225,18 @@ def get_address_from_point(lat, lon):
         return "Error in Geocoding API call."
 
 
-def get_map_point_data(roi, lat, lon):
+def get_map_point_data(roi: dict, lat: float, lon: float) -> dict:
+    """
+    Retrieves the data for a specific point on the map.
+
+    Parameters:
+        roi (dict): The region of interest data.
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+
+    Returns:
+        dict: The data for the specified point.
+    """
 
     data = {
         "elevation": get_elevation_point(lat, lon),

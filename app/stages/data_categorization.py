@@ -1,5 +1,6 @@
 """
-This module contains the logic to evaluate environmental criteria to determine suitability for afforestation.
+This module contains the logic to evaluate environmental criteria 
+to determine suitability for afforestation.
 """
 
 # Python
@@ -19,12 +20,14 @@ def evaluate_afforestation_candidates(
     world_cover: Union[str, ee.Image],
 ) -> Union[bool, ee.Image]:
     """
-    Evaluates environmental criteria to determine suitability for afforestation using either Earth Engine objects or scalar values.
+    Evaluates environmental criteria to determine suitability for
+    afforestation using either Earth Engine objects or scalar values.
 
     Returns:
-    bool or ee.Image: Whether the area is suitable for afforestation.
+    bool or ee.Image: Is the area suitable for afforestation.
     """
-    # Centralized handling of conditions to uniformly assess suitability across both point and regional data
+    # Centralized handling of conditions to uniformly assess
+    # suitability across both point and regional data
 
     conditions: dict[str, Union[int, float, dict[str, int]]] = {
         "slope": 15,

@@ -1,11 +1,15 @@
-# Python
-import ee
+"""
+Module for establishing connection with the Google Earth Engine API.
+"""
 
-# Third party
+# Python
 import os
 
+# Third party
+import ee
 
-def get_environment_variables():
+
+def get_environment_variables() -> tuple[str, str]:
     """
     Retrieves environment variables for authentication.
 
@@ -27,18 +31,18 @@ def get_environment_variables():
     return service_account, path_private_key
 
 
-def initialize_earth_engine(service_account, private_key):
+def initialize_earth_engine(service_account: str, private_key_path: str):
     """
     Initializes Google Earth Engine with specified credentials.
 
     Args:
         service_account: Google service account email.
-        private_key: Path to the Google service account private key file.
+        private_key_path: Path to the Google service account private key file.
 
     Raises:
         RuntimeError: If initialization fails.
     """
-    credentials = ee.ServiceAccountCredentials(service_account, private_key)
+    credentials = ee.ServiceAccountCredentials(service_account, private_key_path)
     ee.Initialize(credentials)
 
 
@@ -53,8 +57,8 @@ def establish_connection():
     except ee.EEException as e:
         raise RuntimeError(
             f"Connection validation failed with Earth Engine API error: {e}"
-        )
+        ) from e
     except Exception as e:
         raise RuntimeError(
             f"Connection validation failed with an unexpected error: {e}"
-        )
+        ) from e

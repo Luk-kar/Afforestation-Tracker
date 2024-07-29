@@ -1,3 +1,11 @@
+"""
+This module contains functions for fetching environmental data layers 
+for a specified region of interest.
+"""
+
+# Python
+from typing import Union
+
 # Third party
 import ee
 
@@ -16,12 +24,17 @@ from stages.data_acquisition.gee_server import (
 )
 from utils import validate_are_keys_the_same
 
+Roi_Coords = list[list[Union[float, float]]]
 
-def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
+
+def get_rootzone_soil_moisture_region(
+    roi_coords: Roi_Coords, start_date: str, end_date: str
+) -> ee.Image:
     """
     Retrieves the mean root zone soil moisture for a specified date range.
 
     Parameters:
+        roi_coords (list): List of coordinates defining the region of interest.
         start_date (str): The start date of the period of interest in 'YYYY-MM-DD' format.
         end_date (str): The end date of the period of interest in 'YYYY-MM-DD' format.
 
@@ -32,7 +45,9 @@ def get_rootzone_soil_moisture_region(roi_coords, start_date, end_date):
     return fetch_mean_soil_moisture_data((start_date, end_date), roi)
 
 
-def get_precipitation_region(roi_coords, start_date, end_date):
+def get_precipitation_region(
+    roi_coords: Roi_Coords, start_date: str, end_date: str
+) -> ee.Image:
     """
     Retrieves the total precipitation for a specified date range.
 
@@ -48,7 +63,7 @@ def get_precipitation_region(roi_coords, start_date, end_date):
     return fetch_total_precipitation_data((start_date, end_date), roi)
 
 
-def get_elevation_region(roi_coords):
+def get_elevation_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the elevation data for the specified region of interest.
 
@@ -62,7 +77,7 @@ def get_elevation_region(roi_coords):
     return fetch_elevation_data(roi)
 
 
-def get_slope_region(roi_coords):
+def get_slope_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the slope data for the specified region of interest.
 
@@ -76,7 +91,7 @@ def get_slope_region(roi_coords):
     return fetch_slope_data(roi)
 
 
-def get_soil_organic_carbon_region(roi_coords):
+def get_soil_organic_carbon_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the soil organic carbon data for the specified region of interest.
 
@@ -90,7 +105,7 @@ def get_soil_organic_carbon_region(roi_coords):
     return fetch_soil_organic_carbon_data(roi)
 
 
-def get_world_cover_region(roi_coords):
+def get_world_cover_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the world cover data for the specified region of interest.
 
@@ -104,15 +119,16 @@ def get_world_cover_region(roi_coords):
     return fetch_world_cover_data(roi)
 
 
-def get_afforestation_candidates_region(roi_coords, periods):
+def get_afforestation_candidates_region(
+    roi_coords: Roi_Coords, periods: dict[str, dict[str, str]]
+) -> ee.Image:
     """
     Retrieves candidate regions for afforestation based on environmental criteria such as
     soil moisture, precipitation, slope, and world cover.
 
     Parameters:
         roi_coords (list): List of coordinates defining the region of interest.
-        start_date (str): Start date for analyzing precipitation data.
-        end_date (str): End date for analyzing precipitation data.
+        periods (dict): Dictionary containing the periods for data fetching.
 
     Returns:
         ee.Image: Image showing areas suitable for afforestation.
@@ -129,7 +145,22 @@ def get_afforestation_candidates_region(roi_coords, periods):
     return candidate_regions
 
 
-def get_afforestation_candidates_data(roi_coords, periods):
+def get_afforestation_candidates_data(
+    roi_coords: Roi_Coords, periods: dict[str, dict[str, str]]
+) -> tuple[ee.Image, ee.Image, ee.Image, ee.Image]:
+    """
+    Fetches the environmental data layers for the specified region and date range.
+
+    Parameters:
+
+        roi_coords (list): List of coordinates defining the region of interest.
+        periods (dict): Dictionary containing the periods for data fetching.
+
+    Returns:
+
+    tuple: A tuple containing the slope, precipitation, soil moisture,
+    and world cover data layers.
+    """
 
     rainy_season = periods["soil_moisture"]
     year = periods["precipitation"]
@@ -146,14 +177,19 @@ def get_afforestation_candidates_data(roi_coords, periods):
     return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
 
 
-def get_region_data(roi, map_data):
+def get_region_data(roi: dict, map_data: dict) -> dict:
     """
-    Enrich the map data dictionary with additional environmental data layers for the specified region of interest.
+    Enrich the map data dictionary with additional environmental data layers
+    for the specified region of interest.
 
     Parameters:
-        roi (dict): Dictionary containing the region of interest coordinates and periods for data fetching.
+        roi (dict): Dictionary containing the region of interest coordinates
+                    and periods for data fetching.
+
         map_data (dict): Dictionary containing the current map data layers to be enriched.
 
+    Returns:
+        dict: Dictionary containing the center coordinates and enriched map data
     """
     # Fetch and update each environmental layer in the map_data dictionary
 
@@ -208,7 +244,16 @@ def get_region_data(roi, map_data):
     return data
 
 
-def calculate_center(roi_coords):
+def calculate_center(roi_coords: Roi_Coords) -> tuple[float, float]:
+    """
+    Calculate the centroid of the region of interest coordinates.
+
+    Parameters:
+        roi_coords (list): List of coordinates defining the region of interest.
+
+    Returns:
+        tuple: A tuple containing the latitude and longitude of the centroid.
+    """
 
     # Calculate the centroid of the roi_coords to use as the center for the map
     lats = [coord[1] for coord in roi_coords]  # Extract all latitudes

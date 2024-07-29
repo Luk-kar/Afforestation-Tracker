@@ -1,3 +1,7 @@
+"""
+This module contains functions to fetch data from Google Earth Engine (GEE) server.
+"""
+
 # Third party
 import ee
 
@@ -25,8 +29,12 @@ world_cover_esa_codes = {
     "Moss and Lichen": 100,
 }
 
+Date_Range = tuple[str, str]
 
-def fetch_mean_soil_moisture_data(date_range, geometry):
+
+def fetch_mean_soil_moisture_data(
+    date_range: Date_Range, geometry: ee.Geometry
+) -> ee.Image:
     """
     Fetches and computes the mean soil moisture over a given date range and geographical area.
 
@@ -52,12 +60,13 @@ def fetch_mean_soil_moisture_data(date_range, geometry):
     return mean_soil_moisture.rename("mean_soil_moisture_root_zone")
 
 
-def fetch_total_precipitation_data(date_range, geometry):
+def fetch_total_precipitation_data(
+    date_range: Date_Range, geometry: ee.Geometry
+) -> ee.Image:
     """
     Fetches and computes the total precipitation over a given date range and geographical area.
 
     Parameters:
-        image_collection_name (str): Name of the image collection in the Google Earth Engine collections.
         date_range (tuple): A tuple of (start_date, end_date) in 'YYYY-MM-DD' format.
         geometry (ee.Geometry): The geographic area for the precipitation calculation.
 
@@ -77,7 +86,7 @@ def fetch_total_precipitation_data(date_range, geometry):
     return total_precipitation.rename("total_precipitation")
 
 
-def fetch_elevation_data(geometry):
+def fetch_elevation_data(geometry: ee.Geometry) -> ee.Image:
     """
     Fetches and computes the elevation data over a given date range and geographical area.
 
@@ -93,7 +102,7 @@ def fetch_elevation_data(geometry):
     return elevation.rename("elevation")
 
 
-def fetch_slope_data(geometry):
+def fetch_slope_data(geometry: ee.Geometry) -> ee.Image:
     """
     Fetches and computes the slope data over a given date range and geographical area.
 
@@ -115,15 +124,17 @@ def fetch_slope_data(geometry):
     return slope.rename("slope")
 
 
-def fetch_soil_organic_carbon_data(geometry):
+def fetch_soil_organic_carbon_data(geometry: ee.Geometry) -> ee.Image:
     """
-    Fetches and processes the soil organic carbon data for a given geometry, which can be a point or a region.
+    Fetches and processes the soil organic carbon data for a given geometry,
+    which can be a point or a region.
 
     Parameters:
         geometry (ee.Geometry): The geometry (Point for specific locations or Polygon for regions).
 
     Returns:
-        ee.Image or float: Soil organic carbon data clipped to the region or a specific value at a point.
+        ee.Image or float: Soil organic carbon data clipped to the region
+        or a specific value at a point.
     """
 
     soil_organic_carbon = (
@@ -135,7 +146,7 @@ def fetch_soil_organic_carbon_data(geometry):
     return soil_organic_carbon.rename("soil_organic_carbon")
 
 
-def fetch_world_cover_data(geometry):
+def fetch_world_cover_data(geometry: ee.Geometry) -> ee.Image:
     """
     Retrieves the world cover data for the specified region of interest.
 
