@@ -17,6 +17,7 @@ from stages.data_acquisition.gee_server import (
 )
 from stages.data_categorization import evaluate_afforestation_candidates
 from validation import handle_ee_operations, validate_coordinates
+from config import SIZE_SAMPLE_METERS
 
 
 @handle_ee_operations
@@ -44,7 +45,9 @@ def get_rootzone_soil_moisture_point(
     )
 
     soil_moisture_value = (
-        mean_soil_moisture_image.reduceRegion(ee.Reducer.first(), point, scale=100)
+        mean_soil_moisture_image.reduceRegion(
+            ee.Reducer.first(), point, scale=SIZE_SAMPLE_METERS
+        )
         .get("mean_soil_moisture_root_zone")
         .getInfo()
     )
@@ -77,7 +80,7 @@ def get_precipitation_point(
 
     precipitation_value = (
         total_precipitation_image.reduceRegion(
-            reducer=ee.Reducer.first(), geometry=point, scale=100
+            reducer=ee.Reducer.first(), geometry=point, scale=SIZE_SAMPLE_METERS
         )
         .get("total_precipitation")
         .getInfo()
@@ -106,7 +109,7 @@ def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
         soil_organic_carbon.reduceRegion(
             reducer=ee.Reducer.first(),
             geometry=point,
-            scale=100,
+            scale=SIZE_SAMPLE_METERS,
         )
         .get("soil_organic_carbon")
         .getInfo()
@@ -133,7 +136,9 @@ def get_elevation_point(lat: float, lon: float) -> float:
     elevation_image = fetch_elevation_data(point)
 
     elevation_value = (
-        elevation_image.reduceRegion(ee.Reducer.first(), point, scale=10)
+        elevation_image.reduceRegion(
+            ee.Reducer.first(), point, scale=10
+        )  # Exception for scale for precision
         .get("elevation")
         .getInfo()
     )
@@ -162,7 +167,7 @@ def get_slope_point(lat: float, lon: float) -> float:
         slope.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=point,
-            scale=100,
+            scale=SIZE_SAMPLE_METERS,
         )
         .get("slope")
         .getInfo()
@@ -197,7 +202,7 @@ def get_world_cover_point(lat: float, lon: float) -> str:
         world_cover.reduceRegion(
             reducer=ee.Reducer.first(),
             geometry=point,
-            scale=100,
+            scale=SIZE_SAMPLE_METERS,
         )
         .get("world_cover")
         .getInfo()
@@ -225,7 +230,9 @@ def get_address_from_point(lat: float, lon: float) -> str:
 
     try:
         response = requests.get(base_url, params=params, headers=headers, timeout=10)
-        if response.status_code == 200:
+        IS_SUCCESS = response.status_code == 200
+
+        if IS_SUCCESS:
             json_result = response.json()
             address = json_result.get("display_name")
             return address or "No address found."

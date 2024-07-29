@@ -8,6 +8,7 @@ import ee
 # Local
 from _types import Date_Range
 from validation import handle_ee_operations
+from config import SIZE_SAMPLE_METERS
 
 # Google Earth Engine Collections
 # All of the data is open-source, Google provides the server side computation
@@ -123,7 +124,7 @@ def fetch_slope_data(geometry: ee.Geometry) -> ee.Image:
     # Check if geometry is a point and handle accordingly
     # Expand the region slightly around the point for reliable slope calculation
     if geometry.type().getInfo() == "Point":
-        buffer_distance = 100
+        buffer_distance = SIZE_SAMPLE_METERS
         geometry = geometry.buffer(buffer_distance)
 
     slope = ee.Terrain.slope(elevation.clip(geometry))

@@ -20,6 +20,7 @@ from config import MAP_DATA, ROI
 
 
 def main():
+
     # Initialize Earth Engine and display data on the map
     if not initialize_earth_engine():
         return

@@ -7,6 +7,8 @@ configuration for the data acquisition, data processing, and data visualization
 stages.
 """
 
+SIZE_SAMPLE_METERS = 100  # google earth engine sample size
+
 ROI_COORDS = [
     [-17.5, 15.0],
     [-17.5, 20.0],
