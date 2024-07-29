@@ -1,3 +1,12 @@
+"""
+Configuration file for the app
+
+This file contains the configuration for the app. It is used to store the
+configuration for the different stages of the app. This includes the
+configuration for the data acquisition, data processing, and data visualization
+stages.
+"""
+
 # Local
 from stages.data_acquisition.gee_server import (
     world_cover_esa_codes,

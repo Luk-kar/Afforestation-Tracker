@@ -1,4 +1,16 @@
-def validate_are_keys_the_same(dict1, dict2):
+"""
+Small, various utility functions used throughout the program
+"""
+
+
+def validate_are_keys_the_same(dict1: dict, dict2: dict):
+    """
+    Compares the keys of two dictionaries and raises an error if they do not match.
+
+    Raises:
+    ValueError: If the keys of the two dictionaries do not match, with details of missing keys.
+    """
+
     if set(dict1.keys()) != set(dict2.keys()):
         missing_in_dict1 = set(dict2.keys()) - set(dict1.keys())
         missing_in_dict2 = set(dict1.keys()) - set(dict2.keys())

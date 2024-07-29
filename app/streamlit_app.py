@@ -1,3 +1,8 @@
+"""
+This script contains the Streamlit app logic and is the entry point for the Streamlit app. 
+It initializes the Earth Engine module, retrieves the region data, and displays the map.
+"""
+
 # Third party
 from streamlit_folium import st_folium
 

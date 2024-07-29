@@ -1,26 +1,36 @@
+"""
+This module contains functions to display the map and map point information on the Streamlit app.
+"""
+
 # Third party
+import ee
 import folium
+from folium.plugins import MousePosition
 import geemap.foliumap as geemap
 import streamlit as st
-from folium.plugins import MousePosition
 import streamlit.components.v1 as components
 
 
-def add_layer_to_map(Map, layer):
-    data = layer["data"]
-    vis_params = layer["vis_params"]
-    name = layer["name"]
+def add_layer_to_map(gee_map: geemap.Map, layer: dict):
+    """Add a layer to the map with the specified vis_params and name."""
+
+    data: ee.Image = layer["data"]
+    vis_params: dict = layer["vis_params"]
+    name: str = layer["name"]
 
     # Update the vis_params to set the opacity (if the API supports it directly)
     # For Google Earth Engine's folium map, you can include 'opacity' as a key in vis_params.
     updated_vis_params = vis_params.copy()  # Make a copy to avoid mutating the original
     updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
 
-    Map.addLayer(data, updated_vis_params, name)
+    gee_map.addLayer(data, updated_vis_params, name)
 
 
-def generate_map_legend_html(map_data):
-    """Generate HTML content for displaying legends based on map data."""
+def generate_map_legend_html(map_data: dict) -> str:
+    """
+    Generate HTML content for displaying the map legend.
+    """
+
     html_content = """
     <style>
         .scrollable-box {
@@ -115,18 +125,21 @@ def generate_map_legend_html(map_data):
     return html_content
 
 
-def display_map(data):
+def display_map(data: dict) -> geemap.Map:
+    """
+    Display the map with the specified data layers and center.
+    """
 
     maps = data["maps"]
     center = data["center"]
 
     # Create the map centered at the calculated centroid
-    Map = geemap.Map(center=center, zoom=3.0)
+    gee_map = geemap.Map(center=center, zoom=3.0)
 
-    Map.add_child(folium.LatLngPopup())
+    gee_map.add_child(folium.LatLngPopup())
 
     for layer in maps.values():
-        add_layer_to_map(Map, layer)
+        add_layer_to_map(gee_map, layer)
 
     formatter = "function(num) {return L.Util.formatNum(num, 3) + ' º ';};"
 
@@ -139,14 +152,17 @@ def display_map(data):
         prefix="Coordinates:",
         lat_formatter=formatter,
         lng_formatter=formatter,
-    ).add_to(Map)
+    ).add_to(gee_map)
 
-    folium.LayerControl().add_to(Map)
+    folium.LayerControl().add_to(gee_map)
 
-    return Map
+    return gee_map
 
 
-def display_map_point_info(data):
+def display_map_point_info(data: dict):
+    """
+    Display the information for the clicked point on the map as a separate success or error message.
+    """
 
     # Text formatting
     lat_rounded, lon_rounded = (round(data["lat"], 4), round(data["lon"], 4))
@@ -174,6 +190,9 @@ def display_map_point_info(data):
         st.error(result)
 
 
-def display_map_legend(map_data):
+def display_map_legend(map_data: dict):
+    """
+    Display the map legend for the specified map data.
+    """
     legends_html = generate_map_legend_html(map_data)
     components.html(legends_html, height=400, scrolling=True)

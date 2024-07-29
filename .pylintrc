@@ -1,0 +1,22 @@
+[MASTER]
+# A comma-separated list of package or module names from where C extensions may be loaded.
+extension-pkg-whitelist=
+
+[MESSAGES CONTROL]
+# False positive messages in streamlit app
+disable=E0401
+
+[IMPORTS]
+init-import=no
+
+[TYPECHECK]
+known-standard-library=
+
+[LOGGING]
+logging-modules=logging
+
+[FORMAT]
+max-line-length=100
+
+[BASIC]
+good-names=i,j,k,ex,Run,_
