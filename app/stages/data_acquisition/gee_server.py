@@ -5,6 +5,9 @@ This module contains functions to fetch data from Google Earth Engine (GEE) serv
 # Third party
 import ee
 
+# Local
+from _types import Date_Range
+
 # Google Earth Engine Collections
 # All of the data is open-source, Google provides the server side computation
 gee_map_collections = {
@@ -28,8 +31,6 @@ world_cover_esa_codes = {
     "Mangroves": 95,
     "Moss and Lichen": 100,
 }
-
-Date_Range = tuple[str, str]
 
 
 def fetch_mean_soil_moisture_data(

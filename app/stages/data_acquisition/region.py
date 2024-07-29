@@ -3,10 +3,6 @@ This module contains functions for fetching environmental data layers
 for a specified region of interest.
 """
 
-# Python
-from datetime import datetime
-from typing import Union
-
 # Third party
 import ee
 
@@ -23,11 +19,29 @@ from stages.data_categorization import evaluate_afforestation_candidates
 from stages.data_acquisition.gee_server import (
     world_cover_esa_codes,
 )
-from utils import validate_are_keys_the_same
+from validation import (
+    validate_are_keys_the_same,
+    validate_many_dates,
+    is_valid_roi_coords,
+)
+from _types import Roi_Coords
 
-Roi_Coords = list[list[Union[float, float]]]
+
+def handle_ee_operations(func):
+    """Decorator to handle errors from Google Earth Engine operations"""
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ee.EEException as e:
+            raise RuntimeError(f"Earth Engine operation failed: {str(e)}")
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error in Earth Engine operation: {str(e)}")
+
+    return wrapper
 
 
+@handle_ee_operations
 def get_rootzone_soil_moisture_region(
     roi_coords: Roi_Coords, start_date: str, end_date: str
 ) -> ee.Image:
@@ -47,16 +61,14 @@ def get_rootzone_soil_moisture_region(
     except ValueError as e:
         raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
 
-    if validate_dates(start_date, end_date):
+    if validate_many_dates(start_date, end_date):
         raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
 
-    try:
-        roi = ee.Geometry.Polygon(roi_coords)
-        return fetch_mean_soil_moisture_data((start_date, end_date), roi)
-    except Exception as e:
-        raise ValueError(f"Error fetching soil moisture data: {str(e)}") from e
+    roi = ee.Geometry.Polygon(roi_coords)
+    return fetch_mean_soil_moisture_data((start_date, end_date), roi)
 
 
+@handle_ee_operations
 def get_precipitation_region(
     roi_coords: Roi_Coords, start_date: str, end_date: str
 ) -> ee.Image:
@@ -76,16 +88,14 @@ def get_precipitation_region(
     except ValueError as e:
         raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
 
-    if validate_dates(start_date, end_date):
+    if validate_many_dates(start_date, end_date):
         raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
 
-    try:
-        roi = ee.Geometry.Polygon(roi_coords)
-        return fetch_total_precipitation_data((start_date, end_date), roi)
-    except Exception as e:
-        raise ValueError(f"Error fetching precipitation data: {str(e)}") from e
+    roi = ee.Geometry.Polygon(roi_coords)
+    return fetch_total_precipitation_data((start_date, end_date), roi)
 
 
+@handle_ee_operations
 def get_elevation_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the elevation data for the specified region of interest.
@@ -105,6 +115,7 @@ def get_elevation_region(roi_coords: Roi_Coords) -> ee.Image:
     return fetch_elevation_data(roi)
 
 
+@handle_ee_operations
 def get_slope_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the slope data for the specified region of interest.
@@ -124,6 +135,7 @@ def get_slope_region(roi_coords: Roi_Coords) -> ee.Image:
     return fetch_slope_data(roi)
 
 
+@handle_ee_operations
 def get_soil_organic_carbon_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the soil organic carbon data for the specified region of interest.
@@ -143,6 +155,7 @@ def get_soil_organic_carbon_region(roi_coords: Roi_Coords) -> ee.Image:
     return fetch_soil_organic_carbon_data(roi)
 
 
+@handle_ee_operations
 def get_world_cover_region(roi_coords: Roi_Coords) -> ee.Image:
     """
     Retrieves the world cover data for the specified region of interest.
@@ -162,6 +175,7 @@ def get_world_cover_region(roi_coords: Roi_Coords) -> ee.Image:
     return fetch_world_cover_data(roi)
 
 
+@handle_ee_operations
 def get_afforestation_candidates_region(
     roi_coords: Roi_Coords, periods: dict[str, dict[str, str]]
 ) -> ee.Image:
@@ -193,6 +207,7 @@ def get_afforestation_candidates_region(
     return candidate_regions
 
 
+@handle_ee_operations
 def get_afforestation_candidates_data(
     roi_coords: Roi_Coords, periods: dict[str, dict[str, str]]
 ) -> tuple[ee.Image, ee.Image, ee.Image, ee.Image]:
@@ -215,9 +230,9 @@ def get_afforestation_candidates_data(
     except ValueError as e:
         raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
 
-    if validate_dates(
+    if validate_many_dates(
         periods["soil_moisture"]["start_date"], periods["soil_moisture"]["end_date"]
-    ) or validate_dates(
+    ) or validate_many_dates(
         periods["precipitation"]["start_date"], periods["precipitation"]["end_date"]
     ):
         raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
@@ -225,23 +240,19 @@ def get_afforestation_candidates_data(
     rainy_season = periods["soil_moisture"]
     year = periods["precipitation"]
 
-    try:
-        # Fetch environmental data for the specified region and date range
-        slope = get_slope_region(roi_coords)
-        precipitation_annual = get_precipitation_region(
-            roi_coords, year["start_date"], year["end_date"]
-        )
-        soil_moisture_rainy_season = get_rootzone_soil_moisture_region(
-            roi_coords, rainy_season["start_date"], rainy_season["end_date"]
-        )
-        world_cover = get_world_cover_region(roi_coords)
-        return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
-    except Exception as e:
-        raise ValueError(
-            f"Error fetching afforestation candidate data: {str(e)}"
-        ) from e
+    slope = get_slope_region(roi_coords)
+    precipitation_annual = get_precipitation_region(
+        roi_coords, year["start_date"], year["end_date"]
+    )
+    soil_moisture_rainy_season = get_rootzone_soil_moisture_region(
+        roi_coords, rainy_season["start_date"], rainy_season["end_date"]
+    )
+    world_cover = get_world_cover_region(roi_coords)
+
+    return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
 
 
+@handle_ee_operations
 def get_region_data(roi: dict, map_data: dict) -> dict:
     """
     Enrich the map data dictionary with additional environmental data layers
@@ -342,33 +353,3 @@ def calculate_center(roi_coords: Roi_Coords) -> tuple[float, float]:
     center = (center_lat, center_lng)
 
     return center
-
-
-def validate_dates(start_date: str, end_date: str) -> bool:
-    """
-    Validate the start and end dates to be in 'YYYY-MM-DD' format.
-    """
-    return not all(validate_date(date) for date in [start_date, end_date])
-
-
-def validate_date(date_str: str) -> bool:
-    """Validate date format to be YYYY-MM-DD"""
-    try:
-        datetime.strptime(date_str, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
-
-
-def is_valid_roi_coords(roi_coords: Roi_Coords) -> bool:
-    """Validate the ROI coordinates to be a list of lists with two numbers each."""
-
-    if not isinstance(roi_coords, list):
-        raise ValueError("ROI coordinates should be a list of lists.")
-
-    for i in roi_coords:
-        if not isinstance(i, list) or len(i) != 2:
-            raise ValueError("Each coordinate should be a list of two elements.")
-
-        if not isinstance(i[0], (int, float)) or not isinstance(i[1], (int, float)):
-            return ValueError("Each coordinate should be a list of two numbers.")

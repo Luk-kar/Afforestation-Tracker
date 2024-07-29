@@ -7,12 +7,6 @@ configuration for the data acquisition, data processing, and data visualization
 stages.
 """
 
-# Local
-from stages.data_acquisition.gee_server import (
-    world_cover_esa_codes,
-)
-from utils import validate_are_keys_the_same
-
 roi_coords = [
     [-17.5, 15.0],
     [-17.5, 20.0],
@@ -192,7 +186,3 @@ map_data = {
         },
     },
 }
-
-validate_are_keys_the_same(
-    world_cover_esa_codes, map_data["world_cover"]["legend"]["legend_dict"]
-)
