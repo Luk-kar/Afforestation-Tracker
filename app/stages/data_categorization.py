@@ -29,7 +29,7 @@ def evaluate_afforestation_candidates(
     # Centralized handling of conditions to uniformly assess
     # suitability across both point and regional data
 
-    conditions: dict[str, Union[int, float, dict[str, int]]] = {
+    conditions = {
         "slope": 15,
         "precipitation": 200,
         "moisture": 0.2,
@@ -39,57 +39,84 @@ def evaluate_afforestation_candidates(
         },
     }
 
-    is_google_earth_engine_types: bool = (
-        isinstance(slope, ee.Image)
-        and isinstance(precipitation, ee.Image)
-        and isinstance(soil_moisture, ee.Image)
-        and isinstance(world_cover, ee.Image)
+    try:
+        if (
+            isinstance(world_cover, int)
+            and world_cover not in conditions["vegetation_mask"].values()
+        ):
+
+            raise ValueError("Provided world_cover code is not valid.")
+
+        if all(
+            isinstance(item, ee.Image)
+            for item in [slope, precipitation, soil_moisture, world_cover]
+        ):
+
+            return evaluate_with_ee_images(
+                slope, precipitation, soil_moisture, world_cover, conditions
+            )
+
+        elif all(
+            isinstance(item, (int, float)) or item is None
+            for item in [slope, precipitation, soil_moisture]
+        ) and isinstance(world_cover, int):
+
+            return evaluate_with_scalars(
+                slope, precipitation, soil_moisture, world_cover, conditions
+            )
+
+        else:
+            raise TypeError(
+                "Input types must either all be Earth Engine Images or all be scalar values."
+            )
+
+    except ee.EEException as e:
+        raise RuntimeError(f"Failed to process Earth Engine data: {e}")
+    except Exception as e:
+        raise RuntimeError(f"An error occurred during evaluation: {e}")
+
+
+def evaluate_with_ee_images(
+    slope: ee.Image,
+    precipitation: ee.Image,
+    soil_moisture: ee.Image,
+    world_cover: ee.Image,
+    conditions: dict,
+) -> ee.Image:
+    """
+    Evaluate the suitability of an area for afforestation using Earth Engine images.
+
+    Returns: ee.Image: A mask image indicating the suitability of the area.
+    """
+    suitable_slope = slope.lt(conditions["slope"])
+    suitable_precipitation = precipitation.gte(conditions["precipitation"])
+    suitable_soil_moisture = soil_moisture.gte(conditions["moisture"])
+    vegetation_mask = world_cover.eq(conditions["vegetation_mask"]["grassland"]).Or(
+        world_cover.eq(conditions["vegetation_mask"]["barren_land"])
+    )
+    return (
+        suitable_slope.And(suitable_precipitation)
+        .And(suitable_soil_moisture)
+        .And(vegetation_mask)
     )
 
-    is_primitive_values_types: bool = (
-        (isinstance(slope, (int, float)) or slope is None)
-        and isinstance(precipitation, (int, float))
-        and isinstance(soil_moisture, (int, float))
-        and isinstance(world_cover, int)
+
+def evaluate_with_scalars(
+    slope: Union[int, float],
+    precipitation: Union[int, float],
+    soil_moisture: Union[int, float],
+    world_cover: int,
+    conditions: dict,
+) -> bool:
+    """
+    Evaluate the suitability of an area for afforestation using scalar values.
+
+    Returns: bool: Is the area suitable for afforestation.
+    """
+
+    valid_slope = slope <= conditions["slope"]
+    hydration_criteria = (soil_moisture >= conditions["moisture"]) or (
+        precipitation >= conditions["precipitation"]
     )
-
-    if is_google_earth_engine_types:
-        # Earth Engine image logic
-        suitable_slope: ee.Image = slope.lt(conditions["slope"])
-        suitable_precipitation: ee.Image = precipitation.gte(
-            conditions["precipitation"]
-        )
-        suitable_soil_moisture: ee.Image = soil_moisture.gte(conditions["moisture"])
-        vegetation_mask: ee.Image = world_cover.eq(
-            conditions["vegetation_mask"]["grassland"]
-        ).Or(world_cover.eq(conditions["vegetation_mask"]["barren_land"]))
-
-        return (
-            suitable_slope.And(suitable_precipitation)
-            .And(suitable_soil_moisture)
-            .And(vegetation_mask)
-        )
-
-    elif is_primitive_values_types:
-        # Scalar logic: Validate local, pre-fetched data
-        # to determine afforestation suitability without additional queries
-
-        valid_slope: bool = slope <= conditions["slope"]
-        hydration_criteria: bool = (soil_moisture >= conditions["moisture"]) or (
-            precipitation >= conditions["precipitation"]
-        )
-        valid_cover: bool = world_cover in [
-            conditions["vegetation_mask"]["grassland"],
-            conditions["vegetation_mask"]["barren_land"],
-        ]
-
-        return valid_slope and hydration_criteria and valid_cover
-
-    else:
-        raise TypeError(
-            "Invalid input types for afforestation data evaluation:\n"
-            f"slope: {slope} {isinstance(slope, (int, float))} \n"
-            f"precipitation: {precipitation} {isinstance(precipitation, (int, float))}\n"
-            f"soil_moisture: {soil_moisture} {isinstance(soil_moisture, (int, float))}\n"
-            f"world_covers: {world_cover} {isinstance(world_cover, int)}\n"
-        )
+    valid_cover = world_cover in conditions["vegetation_mask"].values()
+    return valid_slope and hydration_criteria and valid_cover

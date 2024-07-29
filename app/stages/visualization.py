@@ -16,17 +16,24 @@ from stages.data_acquisition.gee_server import world_cover_esa_codes
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
     """Add a layer to the map with the specified vis_params and name."""
+    try:
+        data: ee.Image = layer["data"]
+        vis_params: dict = layer["vis_params"]
+        name: str = layer["name"]
 
-    data: ee.Image = layer["data"]
-    vis_params: dict = layer["vis_params"]
-    name: str = layer["name"]
+        # Validate data types
+        if not isinstance(data, ee.Image):
+            raise TypeError("Data must be an Earth Engine Image.")
+        if not isinstance(vis_params, dict):
+            raise TypeError("Visualization parameters must be a dictionary.")
+        if not isinstance(name, str):
+            raise TypeError("Layer name must be a string.")
 
-    # Update the vis_params to set the opacity (if the API supports it directly)
-    # For Google Earth Engine's folium map, you can include 'opacity' as a key in vis_params.
-    updated_vis_params = vis_params.copy()  # Make a copy to avoid mutating the original
-    updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
-
-    gee_map.addLayer(data, updated_vis_params, name)
+        updated_vis_params = vis_params.copy()
+        updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
+        gee_map.addLayer(data, updated_vis_params, name)
+    except Exception as e:
+        raise RuntimeError(f"Failed to add layer to map: {e}")
 
 
 def generate_map_legend_html(map_data: dict) -> str:
@@ -133,68 +140,75 @@ def display_map(data: dict) -> geemap.Map:
     Display the map with the specified data layers and center.
     """
 
-    maps = data["maps"]
-    center = data["center"]
+    try:
+        maps = data["maps"]
+        center = data["center"]
 
-    # Create the map centered at the calculated centroid
-    gee_map = geemap.Map(center=center, zoom=3.0)
+        # Create the map centered at the calculated centroid
+        gee_map = geemap.Map(center=center, zoom=3.0)
 
-    gee_map.add_child(folium.LatLngPopup())
+        gee_map.add_child(folium.LatLngPopup())
 
-    for layer in maps.values():
-        add_layer_to_map(gee_map, layer)
+        for layer in maps.values():
+            add_layer_to_map(gee_map, layer)
 
-    formatter = "function(num) {return L.Util.formatNum(num, 3) + ' º ';};"
+        formatter = "function(num) {return L.Util.formatNum(num, 3) + ' º ';};"
 
-    MousePosition(
-        position="topright",
-        separator=" | ",
-        empty_string="NaN",
-        lng_first=False,
-        num_digits=20,
-        prefix="Coordinates:",
-        lat_formatter=formatter,
-        lng_formatter=formatter,
-    ).add_to(gee_map)
+        MousePosition(
+            position="topright",
+            separator=" | ",
+            empty_string="NaN",
+            lng_first=False,
+            num_digits=20,
+            prefix="Coordinates:",
+            lat_formatter=formatter,
+            lng_formatter=formatter,
+        ).add_to(gee_map)
 
-    folium.LayerControl().add_to(gee_map)
+        folium.LayerControl().add_to(gee_map)
 
-    return gee_map
+        return gee_map
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to display map: {e}")
 
 
 def display_map_point_info(data: dict):
     """
     Display the information for the clicked point on the map as a separate success or error message.
     """
+    try:
+        # Text formatting
+        (
+            lat_rounded,
+            lon_rounded,
+            afforestation_yes_no,
+            slope_rounded,
+            precipitation_rounded,
+            soil_moisture_rounded,
+            world_cover,
+        ) = map_point_text_format(data)
 
-    # Text formatting
-    (
-        lat_rounded,
-        lon_rounded,
-        afforestation_yes_no,
-        slope_rounded,
-        precipitation_rounded,
-        soil_moisture_rounded,
-        world_cover,
-    ) = map_point_text_format(data)
+        # Text display
+        result = f"""
+        Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
+        Address: {data['address']}\n
+        Afforestation Candidate: **{afforestation_yes_no}**\n
+        Elevation: {data['elevation']} meters,
+        Slope: {slope_rounded}°,
+        Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
+        Yearly Precipitation: {precipitation_rounded} mm,
+        Soil Organic Carbon: {data['soil_organic_carbon']} g/kg,
+        World Cover: {world_cover}
+        """
 
-    # Text display
-    result = f"""
-    Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
-    Address: {data['address']}\n
-    Afforestation Candidate: **{afforestation_yes_no}**\n
-    Elevation: {data['elevation']} meters,
-    Slope: {slope_rounded}°,
-    Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
-    Yearly Precipitation: {precipitation_rounded} mm,
-    Soil Organic Carbon: {data['soil_organic_carbon']} g/kg,
-    World Cover: {world_cover}
-    """
+        if data["afforestation_validation"]:
+            st.success(result)
+        else:
+            st.error(result)
 
-    if data["afforestation_validation"]:
-        st.success(result)
-    else:
-        st.error(result)
+    except Exception as e:
+        raise RuntimeError(f"Failed to display map point information: {e}")
 
 
 def map_point_text_format(data: dict) -> tuple:
