@@ -19,7 +19,8 @@ from stages.data_acquisition.region import get_region_data
 from config import MAP_DATA, ROI
 
 
-def main():
+def streamlit_app():
+    """Streamlit app logic."""
 
     # Initialize Earth Engine and display data on the map
     if not initialize_earth_engine():
@@ -80,4 +81,4 @@ def display_legend(regions_data: dict):
 
 
 if __name__ == "__main__":
-    main()
+    streamlit_app()
