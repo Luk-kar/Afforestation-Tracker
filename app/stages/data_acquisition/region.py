@@ -311,7 +311,7 @@ def get_region_data(roi: dict, map_data: dict) -> dict:
                     world_cover_esa_codes, layer["legend"]["legend_dict"]
                 )
             except ValueError as e:
-                raise ValueError(f"Validation error in {key} layer: {str(e)}")
+                raise ValueError(f"Validation error in {key} layer: {str(e)}") from e
 
     data["center"] = center
     data["maps"] = map_data

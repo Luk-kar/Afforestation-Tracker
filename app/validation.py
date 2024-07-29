@@ -47,7 +47,7 @@ def validate_date(date_str: str) -> bool:
         return False
 
 
-def is_valid_roi_coords(roi_coords: Roi_Coords) -> bool:
+def is_valid_roi_coords(roi_coords: Roi_Coords):
     """Validate the ROI coordinates to be a list of lists with two numbers each."""
 
     if not isinstance(roi_coords, list):
@@ -58,12 +58,14 @@ def is_valid_roi_coords(roi_coords: Roi_Coords) -> bool:
             raise ValueError("Each coordinate should be a list of two elements.")
 
         if not isinstance(i[0], (int, float)) or not isinstance(i[1], (int, float)):
-            return ValueError("Each coordinate should be a list of two numbers.")
+            raise ValueError("Each coordinate should be a list of two numbers.")
         else:
             validate_coordinates(i[0], i[1])
 
 
 def validate_coordinates(lat: float, lon: float):
+    """Validate the latitude and longitude to be within the range."""
+
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         raise ValueError(
             "Latitude must be between -90 and 90 and longitude between -180 and 180."
@@ -77,8 +79,10 @@ def handle_ee_operations(func):
         try:
             return func(*args, **kwargs)
         except ee.EEException as e:
-            raise RuntimeError(f"Earth Engine operation failed: {str(e)}")
+            raise RuntimeError(f"Earth Engine operation failed: {str(e)}") from e
         except Exception as e:
-            raise RuntimeError(f"Unexpected error in Earth Engine operation: {str(e)}")
+            raise RuntimeError(
+                f"Unexpected error in Earth Engine operation: {str(e)}"
+            ) from e
 
     return wrapper

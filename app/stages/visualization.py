@@ -33,7 +33,7 @@ def add_layer_to_map(gee_map: geemap.Map, layer: dict):
         updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
         gee_map.addLayer(data, updated_vis_params, name)
     except Exception as e:
-        raise RuntimeError(f"Failed to add layer to map: {e}")
+        raise RuntimeError(f"Failed to add layer to map: {e}") from e
 
 
 def generate_map_legend_html(map_data: dict) -> str:
@@ -170,7 +170,7 @@ def display_map(data: dict) -> geemap.Map:
         return gee_map
 
     except Exception as e:
-        raise RuntimeError(f"Failed to display map: {e}")
+        raise RuntimeError(f"Failed to display map: {e}") from e
 
 
 def display_map_point_info(data: dict):
@@ -208,7 +208,7 @@ def display_map_point_info(data: dict):
             st.error(result)
 
     except Exception as e:
-        raise RuntimeError(f"Failed to display map point information: {e}")
+        raise RuntimeError(f"Failed to display map point information: {e}") from e
 
 
 def map_point_text_format(data: dict) -> tuple:
@@ -252,3 +252,9 @@ def display_map_legend(map_data: dict):
     """
     legends_html = generate_map_legend_html(map_data)
     components.html(legends_html, height=400, scrolling=True)
+
+
+def report_error(message: str, exception: RuntimeError):
+    """Report an error and stop the app."""
+    st.error(f"{message}: {exception}")
+    st.stop()

@@ -71,9 +71,9 @@ def evaluate_afforestation_candidates(
             )
 
     except ee.EEException as e:
-        raise RuntimeError(f"Failed to process Earth Engine data: {e}")
+        raise RuntimeError(f"Failed to process Earth Engine data: {e}") from e
     except Exception as e:
-        raise RuntimeError(f"An error occurred during evaluation: {e}")
+        raise RuntimeError(f"An error occurred during evaluation: {e}") from e
 
 
 def evaluate_with_ee_images(
