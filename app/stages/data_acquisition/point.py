@@ -222,6 +222,7 @@ def get_address_from_point(lat: float, lon: float) -> str:
         else:
             return "No address found."
     else:
+        # It can break if too much requests are made
         return "Error in Geocoding API call."
 
 

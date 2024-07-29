@@ -22,10 +22,17 @@ def get_environment_variables() -> tuple[str, str]:
     path_private_key = os.getenv("YOUR_ACCESS_TOKEN")
     service_account = os.getenv("SERVICE_ACCOUNT")
 
-    if path_private_key is None or service_account is None:
+    missing_vars = [
+        var
+        for var, value in [
+            ("SERVICE_ACCOUNT", service_account),
+            ("YOUR_ACCESS_TOKEN", path_private_key),
+        ]
+        if not value
+    ]
+    if missing_vars:
         raise ValueError(
-            f"Environment variables for the service account or access token are not set.\n"
-            f"YOUR_ACCESS_TOKEN: {path_private_key}\nSERVICE_ACCOUNT: {service_account}"
+            f"Required environment variables are not set or are empty: {', '.join(missing_vars)}"
         )
 
     return service_account, path_private_key
@@ -42,8 +49,15 @@ def initialize_earth_engine(service_account: str, private_key_path: str):
     Raises:
         RuntimeError: If initialization fails.
     """
-    credentials = ee.ServiceAccountCredentials(service_account, private_key_path)
-    ee.Initialize(credentials)
+    try:
+        credentials = ee.ServiceAccountCredentials(service_account, private_key_path)
+        ee.Initialize(credentials)
+    except ee.EEException as e:
+        raise RuntimeError(f"Failed to initialize Google Earth Engine: {str(e)}") from e
+    except Exception as e:
+        raise RuntimeError(
+            f"An error occurred during Google Earth Engine initialization: {str(e)}"
+        ) from e
 
 
 def establish_connection():

@@ -10,6 +10,9 @@ import geemap.foliumap as geemap
 import streamlit as st
 import streamlit.components.v1 as components
 
+# Local
+from stages.data_acquisition.gee_server import world_cover_esa_codes
+
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
     """Add a layer to the map with the specified vis_params and name."""
@@ -165,11 +168,15 @@ def display_map_point_info(data: dict):
     """
 
     # Text formatting
-    lat_rounded, lon_rounded = (round(data["lat"], 4), round(data["lon"], 4))
-    afforestation_yes_no = "Yes" if data["afforestation_validation"] else "No"
-    slope_rounded = round(data["slope"], 1)
-    precipitation_rounded = round(data["precipitation"], 2)
-    soil_moisture_rounded = round(data["soil_moisture"] * 100, 2)
+    (
+        lat_rounded,
+        lon_rounded,
+        afforestation_yes_no,
+        slope_rounded,
+        precipitation_rounded,
+        soil_moisture_rounded,
+        world_cover,
+    ) = map_point_text_format(data)
 
     # Text display
     result = f"""
@@ -181,13 +188,48 @@ def display_map_point_info(data: dict):
     Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
     Yearly Precipitation: {precipitation_rounded} mm,
     Soil Organic Carbon: {data['soil_organic_carbon']} g/kg,
-    World Cover: {data['world_cover']}
+    World Cover: {world_cover}
     """
 
     if data["afforestation_validation"]:
         st.success(result)
     else:
         st.error(result)
+
+
+def map_point_text_format(data: dict) -> tuple:
+    """
+    Format the map point information for display.
+
+    Returns:
+        Tuple containing the formatted text for the map point
+    """
+
+    lat_rounded, lon_rounded = (round(data["lat"], 4), round(data["lon"], 4))
+    afforestation_yes_no = "Yes" if data["afforestation_validation"] else "No"
+    slope_rounded = round(data["slope"], 1)
+    precipitation_rounded = round(data["precipitation"], 2)
+    soil_moisture_rounded = round(data["soil_moisture"] * 100, 2)
+
+    world_cover_code = data["world_cover"]
+    world_cover = next(
+        (
+            name
+            for name, code in world_cover_esa_codes.items()
+            if code == world_cover_code
+        ),
+        "Unknown cover",
+    )
+
+    return (
+        lat_rounded,
+        lon_rounded,
+        afforestation_yes_no,
+        slope_rounded,
+        precipitation_rounded,
+        soil_moisture_rounded,
+        world_cover,
+    )
 
 
 def display_map_legend(map_data: dict):
