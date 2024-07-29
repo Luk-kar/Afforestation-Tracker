@@ -11,7 +11,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # Local
-from stages.data_acquisition.gee_server import world_cover_esa_codes
+from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
@@ -36,15 +36,17 @@ def add_layer_to_map(gee_map: geemap.Map, layer: dict):
         raise RuntimeError(f"Failed to add layer to map: {e}") from e
 
 
-def generate_map_legend_html(map_data: dict) -> str:
+def generate_legend(map_legends: dict) -> str:
     """
-    Generate HTML content for displaying the map legend.
-    """
+    Generate HTML for the map legend using the provided legend data.
 
-    html_content = """
+    Returns:
+        str: HTML string for the map legend
+    """
+    style_section = """
     <style>
-        .scrollable-box {
-            height: 315px; /* Adjust height as needed */
+        .scrollable-legend {
+            height: 315px;
             overflow-x: scroll;
             overflow-y: hidden;
             white-space: nowrap;
@@ -54,7 +56,7 @@ def generate_map_legend_html(map_data: dict) -> str:
             display: flex;
             align-items: flex-start;
         }
-        .draggable {
+        .legend-entry {
             display: inline-block;
             cursor: move;
             padding: 10px;
@@ -67,72 +69,63 @@ def generate_map_legend_html(map_data: dict) -> str:
         .legend-title {
             font-weight: bold;
         }
-        .legend-item {
+        .legend-detail {
             display: flex;
             align-items: center;
             margin-top: 5px;
         }
-        .legend-color-box {
+        .color-indicator {
             width: 20px;
             height: 20px;
             border: 1px solid grey;
             margin-right: 5px;
         }
     </style>
-    <div class='scrollable-box'>
     """
 
-    for key, info in reversed(list(map_data.items())):
-        html_content += f"""
-        <div class='draggable' id='{key}_legend'>
-            <div class='legend-title'>{info['legend']['title']}</div>
-            <div class='legend-items'>
+    legend_html = "<div class='scrollable-legend'>"
+    for key, info in reversed(list(map_legends.items())):
+        legend_html += f"""
+            <div class='legend-entry' id='{key}_legend'>
+                <div class='legend-title'>{info['legend']['title']}</div>
+                <div class='legend-details'>
         """
-        legend = info.get("legend", {})
-        if legend:
-            for label, color in legend["legend_dict"].items():
-                html_content += f"""
-                <div class='legend-item'>
-                    <div class='legend-color-box' style='background-color: #{color};'></div>
-                    <span>{label}</span>
-                </div>
-                """
-        html_content += "</div></div>"
+        for label, color in info.get("legend", {}).get("legend_dict", {}).items():
+            legend_html += f"""
+                    <div class='legend-detail'>
+                        <div class='color-indicator' style='background-color: #{color};'></div>
+                        <span>{label}</span>
+                    </div>
+            """
+        legend_html += "</div></div>"
 
-    html_content += "</div>"
+    legend_html += "</div>"
 
-    html_content += """
+    dragging_script = """
     <script>
-        document.querySelectorAll('.draggable').forEach(el => {
+        document.querySelectorAll('.legend-entry').forEach(el => {
             el.addEventListener('mousedown', function(e) {
                 let shiftX = e.clientX - el.getBoundingClientRect().left;
                 let shiftY = e.clientY - el.getBoundingClientRect().top;
-
                 function moveAt(pageX, pageY) {
                     el.style.left = pageX - shiftX + 'px';
                     el.style.top = pageY - shiftY + 'px';
                 }
-
                 function onMouseMove(e) {
                     moveAt(e.pageX, e.pageY);
                 }
-
                 document.addEventListener('mousemove', onMouseMove);
-
                 el.onmouseup = function() {
                     document.removeEventListener('mousemove', onMouseMove);
                     el.onmouseup = null;
                 };
-
-                el.ondragstart = function() {
-                    return false;
-                };
+                el.ondragstart = function() { return false; };
             });
         });
     </script>
     """
 
-    return html_content
+    return style_section + legend_html + dragging_script
 
 
 def display_map(data: dict) -> geemap.Map:
@@ -229,7 +222,7 @@ def map_point_text_format(data: dict) -> tuple:
     world_cover = next(
         (
             name
-            for name, code in world_cover_esa_codes.items()
+            for name, code in WORLD_COVER_ESA_CODES.items()
             if code == world_cover_code
         ),
         "Unknown cover",
@@ -250,7 +243,7 @@ def display_map_legend(map_data: dict):
     """
     Display the map legend for the specified map data.
     """
-    legends_html = generate_map_legend_html(map_data)
+    legends_html = generate_legend(map_data)
     components.html(legends_html, height=400, scrolling=True)
 
 

@@ -7,7 +7,7 @@ configuration for the data acquisition, data processing, and data visualization
 stages.
 """
 
-roi_coords = [
+ROI_COORDS = [
     [-17.5, 15.0],
     [-17.5, 20.0],
     [39.0, 20.0],
@@ -19,15 +19,15 @@ roi_coords = [
     [-10.0, 13.0],
 ]  # Sahel geo-polygon
 
-roi = {
-    "roi_coords": roi_coords,
+ROI = {
+    "roi_coords": ROI_COORDS,
     "periods": {
         "soil_moisture": {"start_date": "2020-06-01", "end_date": "2020-10-01"},
         "precipitation": {"start_date": "2023-01-01", "end_date": "2023-12-31"},
     },
 }
 
-map_data = {
+MAP_DATA = {
     "elevation": {
         "vis_params": {
             "min": 0,

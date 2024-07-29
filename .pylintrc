@@ -4,7 +4,7 @@ extension-pkg-whitelist=
 
 [MESSAGES CONTROL]
 # False positive messages in streamlit app
-disable=E0401, R1705, C0325
+disable=E0401, R1705, C0325, R1720
 
 [IMPORTS]
 init-import=no

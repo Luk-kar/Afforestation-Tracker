@@ -17,7 +17,7 @@ from stages.data_acquisition.gee_server import (
 )
 from stages.data_categorization import evaluate_afforestation_candidates
 from stages.data_acquisition.gee_server import (
-    world_cover_esa_codes,
+    WORLD_COVER_ESA_CODES,
 )
 from validation import (
     validate_are_keys_the_same,
@@ -308,7 +308,7 @@ def get_region_data(roi: dict, map_data: dict) -> dict:
         ):
             try:
                 validate_are_keys_the_same(
-                    world_cover_esa_codes, layer["legend"]["legend_dict"]
+                    WORLD_COVER_ESA_CODES, layer["legend"]["legend_dict"]
                 )
             except ValueError as e:
                 raise ValueError(f"Validation error in {key} layer: {str(e)}") from e

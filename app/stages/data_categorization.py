@@ -10,7 +10,7 @@ from typing import Union
 import ee
 
 # Local
-from stages.data_acquisition.gee_server import world_cover_esa_codes
+from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
 
 def evaluate_afforestation_candidates(
@@ -34,8 +34,8 @@ def evaluate_afforestation_candidates(
         "precipitation": 200,
         "moisture": 0.2,
         "vegetation_mask": {
-            "grassland": world_cover_esa_codes["Grassland"],
-            "barren_land": world_cover_esa_codes["Bare / Sparse Vegetation"],
+            "grassland": WORLD_COVER_ESA_CODES["Grassland"],
+            "barren_land": WORLD_COVER_ESA_CODES["Bare / Sparse Vegetation"],
         },
     }
 

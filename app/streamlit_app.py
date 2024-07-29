@@ -16,7 +16,7 @@ from stages.visualization import (
 )
 from stages.data_acquisition.point import get_map_point_data
 from stages.data_acquisition.region import get_region_data
-from config import map_data, roi
+from config import MAP_DATA, ROI
 
 
 def main():
@@ -47,7 +47,7 @@ def initialize_earth_engine() -> bool:
 def fetch_and_display_region_data():
     """Fetch region data and display the map."""
     try:
-        regions_data = get_region_data(roi, map_data)
+        regions_data = get_region_data(ROI, MAP_DATA)
         folium_map = display_map(regions_data)
         map_result = st_folium(folium_map, key="map")
         return regions_data, map_result
@@ -64,7 +64,7 @@ def handle_map_clicks(map_result: dict):
             map_result["last_clicked"]["lat"],
             map_result["last_clicked"]["lng"],
         )
-        point_data = get_map_point_data(roi, lat, lon)
+        point_data = get_map_point_data(ROI, lat, lon)
         display_map_point_info(point_data)
     except RuntimeError as e:
         report_error("Failed to retrieve or display point data", e)
