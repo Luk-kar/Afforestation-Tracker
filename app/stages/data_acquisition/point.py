@@ -16,8 +16,10 @@ from stages.data_acquisition.gee_server import (
     fetch_world_cover_data,
 )
 from stages.data_categorization import evaluate_afforestation_candidates
+from validation import handle_ee_operations, validate_coordinates
 
 
+@handle_ee_operations
 def get_rootzone_soil_moisture_point(
     lat: float, lon: float, start_date: str, end_date: str
 ) -> float:
@@ -34,7 +36,9 @@ def get_rootzone_soil_moisture_point(
         float: Average soil moisture value at the given point for the specified date range,
         or 0 if no data is available.
     """
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
+
     mean_soil_moisture_image = fetch_mean_soil_moisture_data(
         (start_date, end_date), point
     )
@@ -47,6 +51,7 @@ def get_rootzone_soil_moisture_point(
     return soil_moisture_value if soil_moisture_value is not None else 0
 
 
+@handle_ee_operations
 def get_precipitation_point(
     lat: float, lon: float, start_date: str, end_date: str
 ) -> float:
@@ -63,8 +68,9 @@ def get_precipitation_point(
         float: Total precipitation value at the given point for the specified date range,
         or 0 if no data is available.
     """
-
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
+
     total_precipitation_image = fetch_total_precipitation_data(
         (start_date, end_date), point
     )
@@ -80,6 +86,7 @@ def get_precipitation_point(
     return precipitation_value
 
 
+@handle_ee_operations
 def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
     """
     Retrieves the soil organic carbon value at a specific point.
@@ -91,7 +98,7 @@ def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
     Returns:
         float: Soil organic carbon value at the given point, or 0 if no data is available.
     """
-
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
     soil_organic_carbon = fetch_soil_organic_carbon_data(point)
 
@@ -108,6 +115,7 @@ def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
     return carbon_value
 
 
+@handle_ee_operations
 def get_elevation_point(lat: float, lon: float) -> float:
     """
     Retrieves the elevation value at a specific point.
@@ -120,7 +128,7 @@ def get_elevation_point(lat: float, lon: float) -> float:
     Returns:
         float: Elevation value at the given point, or 0 if no data is available.
     """
-
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
     elevation_image = fetch_elevation_data(point)
 
@@ -133,6 +141,7 @@ def get_elevation_point(lat: float, lon: float) -> float:
     return elevation_value
 
 
+@handle_ee_operations
 def get_slope_point(lat: float, lon: float) -> float:
     """
     Retrieves the slope value at a specific point.
@@ -144,7 +153,7 @@ def get_slope_point(lat: float, lon: float) -> float:
     Returns:
         float: Slope value at the given point, or 0 if no data is available.
     """
-
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
 
     slope = fetch_slope_data(point)
@@ -168,6 +177,7 @@ def get_slope_point(lat: float, lon: float) -> float:
     return slope_value
 
 
+@handle_ee_operations
 def get_world_cover_point(lat: float, lon: float) -> str:
     """
     Retrieves the world cover value at a specific point.
@@ -179,7 +189,7 @@ def get_world_cover_point(lat: float, lon: float) -> str:
     Returns:
         str: World cover value at the given point, or 'No data available' if no data is available.
     """
-
+    validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
     world_cover = fetch_world_cover_data(point)
 
@@ -207,25 +217,26 @@ def get_address_from_point(lat: float, lon: float) -> str:
     Returns:
         str: Address of the given point, or 'No address found.' if no address is available.
     """
+    validate_coordinates(lat, lon)
 
     base_url = "https://nominatim.openstreetmap.org/reverse"
     headers = {"User-Agent": "MyApp"}
     params = {"lat": lat, "lon": lon, "format": "json"}
 
-    response = requests.get(base_url, params=params, headers=headers, timeout=10)
-
-    if response.status_code == 200:
-        json_result = response.json()
-        address = json_result.get("display_name")
-        if address:
-            return address
+    try:
+        response = requests.get(base_url, params=params, headers=headers, timeout=10)
+        if response.status_code == 200:
+            json_result = response.json()
+            address = json_result.get("display_name")
+            return address or "No address found."
         else:
-            return "No address found."
-    else:
-        # It can break if too much requests are made
-        return "Error in Geocoding API call."
+            return f"Error in Geocoding API call. Status Code: {response.status_code}"
+
+    except requests.exceptions.RequestException as e:
+        return f"Network error during geocoding: {str(e)}"
 
 
+@handle_ee_operations
 def get_map_point_data(roi: dict, lat: float, lon: float) -> dict:
     """
     Retrieves the data for a specific point on the map.

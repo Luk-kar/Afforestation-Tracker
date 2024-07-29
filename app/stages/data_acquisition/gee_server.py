@@ -7,6 +7,7 @@ import ee
 
 # Local
 from _types import Date_Range
+from validation import handle_ee_operations
 
 # Google Earth Engine Collections
 # All of the data is open-source, Google provides the server side computation
@@ -33,6 +34,7 @@ world_cover_esa_codes = {
 }
 
 
+@handle_ee_operations
 def fetch_mean_soil_moisture_data(
     date_range: Date_Range, geometry: ee.Geometry
 ) -> ee.Image:
@@ -61,6 +63,7 @@ def fetch_mean_soil_moisture_data(
     return mean_soil_moisture.rename("mean_soil_moisture_root_zone")
 
 
+@handle_ee_operations
 def fetch_total_precipitation_data(
     date_range: Date_Range, geometry: ee.Geometry
 ) -> ee.Image:
@@ -87,6 +90,7 @@ def fetch_total_precipitation_data(
     return total_precipitation.rename("total_precipitation")
 
 
+@handle_ee_operations
 def fetch_elevation_data(geometry: ee.Geometry) -> ee.Image:
     """
     Fetches and computes the elevation data over a given date range and geographical area.
@@ -103,6 +107,7 @@ def fetch_elevation_data(geometry: ee.Geometry) -> ee.Image:
     return elevation.rename("elevation")
 
 
+@handle_ee_operations
 def fetch_slope_data(geometry: ee.Geometry) -> ee.Image:
     """
     Fetches and computes the slope data over a given date range and geographical area.
@@ -125,6 +130,7 @@ def fetch_slope_data(geometry: ee.Geometry) -> ee.Image:
     return slope.rename("slope")
 
 
+@handle_ee_operations
 def fetch_soil_organic_carbon_data(geometry: ee.Geometry) -> ee.Image:
     """
     Fetches and processes the soil organic carbon data for a given geometry,
@@ -147,6 +153,7 @@ def fetch_soil_organic_carbon_data(geometry: ee.Geometry) -> ee.Image:
     return soil_organic_carbon.rename("soil_organic_carbon")
 
 
+@handle_ee_operations
 def fetch_world_cover_data(geometry: ee.Geometry) -> ee.Image:
     """
     Retrieves the world cover data for the specified region of interest.

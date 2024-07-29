@@ -8,6 +8,9 @@ from datetime import datetime
 # Local
 from _types import Roi_Coords
 
+# Third party
+import ee
+
 
 def validate_are_keys_the_same(dict1: dict, dict2: dict):
     """
@@ -65,3 +68,17 @@ def validate_coordinates(lat: float, lon: float):
         raise ValueError(
             "Latitude must be between -90 and 90 and longitude between -180 and 180."
         )
+
+
+def handle_ee_operations(func):
+    """Decorator to handle errors from Google Earth Engine operations"""
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ee.EEException as e:
+            raise RuntimeError(f"Earth Engine operation failed: {str(e)}")
+        except Exception as e:
+            raise RuntimeError(f"Unexpected error in Earth Engine operation: {str(e)}")
+
+    return wrapper

@@ -23,22 +23,9 @@ from validation import (
     validate_are_keys_the_same,
     validate_many_dates,
     is_valid_roi_coords,
+    handle_ee_operations,
 )
 from _types import Roi_Coords
-
-
-def handle_ee_operations(func):
-    """Decorator to handle errors from Google Earth Engine operations"""
-
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except ee.EEException as e:
-            raise RuntimeError(f"Earth Engine operation failed: {str(e)}")
-        except Exception as e:
-            raise RuntimeError(f"Unexpected error in Earth Engine operation: {str(e)}")
-
-    return wrapper
 
 
 @handle_ee_operations
