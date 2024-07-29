@@ -4,6 +4,7 @@ for a specified region of interest.
 """
 
 # Python
+from datetime import datetime
 from typing import Union
 
 # Third party
@@ -41,8 +42,19 @@ def get_rootzone_soil_moisture_region(
     Returns:
         ee.Image: The mean root zone soil moisture image for the specified period.
     """
-    roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_mean_soil_moisture_data((start_date, end_date), roi)
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
+    if validate_dates(start_date, end_date):
+        raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
+
+    try:
+        roi = ee.Geometry.Polygon(roi_coords)
+        return fetch_mean_soil_moisture_data((start_date, end_date), roi)
+    except Exception as e:
+        raise ValueError(f"Error fetching soil moisture data: {str(e)}") from e
 
 
 def get_precipitation_region(
@@ -59,8 +71,19 @@ def get_precipitation_region(
     Returns:
         ee.Image: The total precipitation image for the specified period.
     """
-    roi = ee.Geometry.Polygon(roi_coords)
-    return fetch_total_precipitation_data((start_date, end_date), roi)
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
+    if validate_dates(start_date, end_date):
+        raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
+
+    try:
+        roi = ee.Geometry.Polygon(roi_coords)
+        return fetch_total_precipitation_data((start_date, end_date), roi)
+    except Exception as e:
+        raise ValueError(f"Error fetching precipitation data: {str(e)}") from e
 
 
 def get_elevation_region(roi_coords: Roi_Coords) -> ee.Image:
@@ -73,6 +96,11 @@ def get_elevation_region(roi_coords: Roi_Coords) -> ee.Image:
     Returns:
         ee.Image: The elevation image for the specified region.
     """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
     roi = ee.Geometry.Polygon(roi_coords)
     return fetch_elevation_data(roi)
 
@@ -87,6 +115,11 @@ def get_slope_region(roi_coords: Roi_Coords) -> ee.Image:
     Returns:
         ee.Image: The slope image for the specified region.
     """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
     roi = ee.Geometry.Polygon(roi_coords)
     return fetch_slope_data(roi)
 
@@ -101,6 +134,11 @@ def get_soil_organic_carbon_region(roi_coords: Roi_Coords) -> ee.Image:
     Returns:
         ee.Image: The soil organic carbon image for the specified region.
     """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
     roi = ee.Geometry.Polygon(roi_coords)
     return fetch_soil_organic_carbon_data(roi)
 
@@ -115,6 +153,11 @@ def get_world_cover_region(roi_coords: Roi_Coords) -> ee.Image:
     Returns:
         ee.Image: The world cover image for the specified region.
     """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
     roi = ee.Geometry.Polygon(roi_coords)
     return fetch_world_cover_data(roi)
 
@@ -133,6 +176,11 @@ def get_afforestation_candidates_region(
     Returns:
         ee.Image: Image showing areas suitable for afforestation.
     """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
     slope, precipitation_annual, soil_moisture_rainy_season, world_cover = (
         get_afforestation_candidates_data(roi_coords, periods)
     )
@@ -162,19 +210,36 @@ def get_afforestation_candidates_data(
     and world cover data layers.
     """
 
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
+    if validate_dates(
+        periods["soil_moisture"]["start_date"], periods["soil_moisture"]["end_date"]
+    ) or validate_dates(
+        periods["precipitation"]["start_date"], periods["precipitation"]["end_date"]
+    ):
+        raise ValueError("Invalid date format. Dates should be in 'YYYY-MM-DD' format.")
+
     rainy_season = periods["soil_moisture"]
     year = periods["precipitation"]
 
-    # Fetch environmental data for the specified region and date range
-    slope = get_slope_region(roi_coords)
-    precipitation_annual = get_precipitation_region(
-        roi_coords, year["start_date"], year["end_date"]
-    )
-    soil_moisture_rainy_season = get_rootzone_soil_moisture_region(
-        roi_coords, rainy_season["start_date"], rainy_season["end_date"]
-    )
-    world_cover = get_world_cover_region(roi_coords)
-    return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
+    try:
+        # Fetch environmental data for the specified region and date range
+        slope = get_slope_region(roi_coords)
+        precipitation_annual = get_precipitation_region(
+            roi_coords, year["start_date"], year["end_date"]
+        )
+        soil_moisture_rainy_season = get_rootzone_soil_moisture_region(
+            roi_coords, rainy_season["start_date"], rainy_season["end_date"]
+        )
+        world_cover = get_world_cover_region(roi_coords)
+        return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
+    except Exception as e:
+        raise ValueError(
+            f"Error fetching afforestation candidate data: {str(e)}"
+        ) from e
 
 
 def get_region_data(roi: dict, map_data: dict) -> dict:
@@ -228,15 +293,27 @@ def get_region_data(roi: dict, map_data: dict) -> dict:
         roi["roi_coords"], roi["periods"]
     )
 
+    # Validate that all layers are ee.Image objects
+    for key, layer in map_data.items():
+        if "data" in layer:
+            if not isinstance(layer["data"], ee.Image):
+                raise ValueError(
+                    f"Error fetching {key} data: {layer['data']} is not an ee.Image."
+                )
+
     # Validate that all layers have matching keys in their legend dicts
     for key, layer in map_data.items():
-        if "legend" in layer and "legend_dict" in layer["legend"]:
+        if (
+            "legend" in layer
+            and "legend_dict" in layer["legend"]
+            and layer == "world_cover"
+        ):
             try:
                 validate_are_keys_the_same(
                     world_cover_esa_codes, layer["legend"]["legend_dict"]
                 )
             except ValueError as e:
-                print(f"Validation error in {key} layer: {str(e)}")
+                raise ValueError(f"Validation error in {key} layer: {str(e)}")
 
     data["center"] = center
     data["maps"] = map_data
@@ -265,3 +342,33 @@ def calculate_center(roi_coords: Roi_Coords) -> tuple[float, float]:
     center = (center_lat, center_lng)
 
     return center
+
+
+def validate_dates(start_date: str, end_date: str) -> bool:
+    """
+    Validate the start and end dates to be in 'YYYY-MM-DD' format.
+    """
+    return not all(validate_date(date) for date in [start_date, end_date])
+
+
+def validate_date(date_str: str) -> bool:
+    """Validate date format to be YYYY-MM-DD"""
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_roi_coords(roi_coords: Roi_Coords) -> bool:
+    """Validate the ROI coordinates to be a list of lists with two numbers each."""
+
+    if not isinstance(roi_coords, list):
+        raise ValueError("ROI coordinates should be a list of lists.")
+
+    for i in roi_coords:
+        if not isinstance(i, list) or len(i) != 2:
+            raise ValueError("Each coordinate should be a list of two elements.")
+
+        if not isinstance(i[0], (int, float)) or not isinstance(i[1], (int, float)):
+            return ValueError("Each coordinate should be a list of two numbers.")
