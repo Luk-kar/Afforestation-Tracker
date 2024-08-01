@@ -20,8 +20,7 @@ def set_lat_lon():
     return default_latlng[0], default_latlng[1]
 
 
-# Update coordinates based on map click events
-def update_coords_on_click(map_data):
+def update_coords_on_click_map(map_data):
     if map_data and map_data["last_clicked"]:
         last_click_lat, last_click_lng = (
             map_data["last_clicked"]["lat"],
@@ -31,21 +30,19 @@ def update_coords_on_click(map_data):
         st.session_state.longitude = last_click_lng
 
 
-# Initialize latitude and longitude in session state if not already set
-if "latitude" not in st.session_state or "longitude" not in st.session_state:
+def update_coords_on_click_btn():
     st.session_state.latitude, st.session_state.longitude = set_lat_lon()
 
-# Button to use the current location, updating map and inputs
-if st.button("Use My Current Location"):
+
+# Initialize latitude and longitude in session state if not already set
+if "latitude" not in st.session_state or "longitude" not in st.session_state:
     st.session_state.latitude, st.session_state.longitude = set_lat_lon()
 
 # Main Streamlit app layout
 st.title("Geo-localization Position Display")
 
 # Create the Folium map centered on the current location
-map = folium.Map(
-    location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12
-)
+map = folium.Map(zoom_start=6)
 folium.Marker(
     [st.session_state.latitude, st.session_state.longitude], popup="Specified Location"
 ).add_to(map)
@@ -55,15 +52,14 @@ folium.LatLngPopup().add_to(map)
 map_data = st_folium(map, width=725, height=500)
 
 # Update coordinates if a location on the map is clicked
-update_coords_on_click(map_data)
+update_coords_on_click_map(map_data)
 
 # Widget for manually updating latitude
-latitude = st.number_input(
-    "Latitude", value=st.session_state.latitude, key="latitude", on_change=set_lat_lon
-)
-longitude = st.number_input(
+st.number_input("Latitude", value=st.session_state.latitude, key="latitude")
+st.number_input(
     "Longitude",
     value=st.session_state.longitude,
     key="longitude",
-    on_change=set_lat_lon,
 )
+
+st.button("Use My Current Location", on_click=update_coords_on_click_btn)
