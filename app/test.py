@@ -67,8 +67,3 @@ longitude = st.number_input(
     key="longitude",
     on_change=set_lat_lon,
 )
-
-if longitude != st.session_state.longitude:
-    st.session_state.longitude = longitude
-elif latitude != st.session_state.latitude:
-    st.session_state.latitude = latitude
