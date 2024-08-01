@@ -47,7 +47,15 @@ def streamlit_app():
 
     handle_map_clicks(map_result)
 
-    col1, col2, col3 = st.columns(3)  # Create two columns
+    display_coordinate_input_panel()
+
+    display_legend(regions_data)
+
+
+def display_coordinate_input_panel():
+    """Display the coordinate input panel."""
+
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.number_input(
@@ -72,8 +80,6 @@ def streamlit_app():
         st.button(
             "Use My Current Location", on_click=update_coords_with_client_localization
         )
-
-    display_legend(regions_data)
 
 
 def initialize_earth_engine() -> bool:
