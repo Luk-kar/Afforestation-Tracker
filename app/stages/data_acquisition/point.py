@@ -7,6 +7,8 @@ import requests
 import ee
 
 # Local
+from config import SIZE_SAMPLE_METERS
+import geocoder
 from stages.data_acquisition.gee_server import (
     fetch_total_precipitation_data,
     fetch_mean_soil_moisture_data,
@@ -17,7 +19,6 @@ from stages.data_acquisition.gee_server import (
 )
 from stages.data_categorization import evaluate_afforestation_candidates
 from validation import handle_ee_operations, validate_coordinates
-from config import SIZE_SAMPLE_METERS
 
 
 @handle_ee_operations
@@ -286,3 +287,16 @@ def get_map_point_data(roi: dict, lat: float, lon: float) -> dict:
         data["world_cover"],
     )
     return data
+
+
+def get_client_location():
+    """
+    Get the latitude and longitude of the users's location.
+
+    Returns:
+        tuple: A tuple containing the latitude and longitude of the users's location.
+    """
+    current_location = geocoder.ip("me")
+    latitude = current_location.latlng[0]
+    longitude = current_location.latlng[1]
+    return latitude, longitude

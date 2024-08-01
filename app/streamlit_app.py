@@ -4,6 +4,7 @@ It initializes the Earth Engine module, retrieves the region data, and displays 
 """
 
 # Third party
+import streamlit as st
 from streamlit_folium import st_folium
 
 # Local
@@ -14,7 +15,7 @@ from stages.visualization import (
     display_map_legend,
     report_error,
 )
-from stages.data_acquisition.point import get_map_point_data
+from stages.data_acquisition.point import get_map_point_data, get_client_location
 from stages.data_acquisition.region import get_region_data
 from config import MAP_DATA, ROI
 
@@ -22,9 +23,21 @@ from config import MAP_DATA, ROI
 def streamlit_app():
     """Streamlit app logic."""
 
+    st.markdown(
+        "<h1 style='text-align: center;'>Afforestation Tracker 🗺️🌳</h1>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p style='text-align: center;'>Click on the map to view data for a specific point 👆</p>",
+        unsafe_allow_html=True,
+    )
+
     # Initialize Earth Engine and display data on the map
     if not initialize_earth_engine():
         return
+
+    if "latitude" not in st.session_state or "longitude" not in st.session_state:
+        st.session_state.latitude, st.session_state.longitude = get_client_location()
 
     regions_data, map_result = fetch_and_display_region_data()
     if not regions_data:
@@ -67,6 +80,7 @@ def handle_map_clicks(map_result: dict):
             map_result["last_clicked"]["lng"],
         )
         point_data = get_map_point_data(ROI, lat, lon)
+
         display_map_point_info(point_data)
     except RuntimeError as e:
         report_error("Failed to retrieve or display point data", e)
