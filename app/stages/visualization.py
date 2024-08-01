@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 
 # Local
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
+from stages.data_acquisition.point import get_client_location
 
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
@@ -245,12 +246,60 @@ def map_point_text_format(data: dict) -> tuple:
     )
 
 
+def display_coordinate_input_panel():
+    """Display the coordinate input panel."""
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.number_input(
+            "Latitude",
+            value=st.session_state.latitude,
+            key="latitude",
+            step=0.5,
+            format="%.4f",
+        )
+
+    with col2:
+        st.number_input(
+            "Longitude",
+            value=st.session_state.longitude,
+            key="longitude",
+            step=0.5,
+            format="%.4f",
+        )
+
+    with col3:
+        st.markdown("<div style='height: 27px;'></div>", unsafe_allow_html=True)
+        st.button(
+            "Use My Current Location", on_click=update_coords_with_client_localization
+        )
+
+
+def update_coords_with_client_localization():
+    st.session_state.latitude, st.session_state.longitude = get_client_location()
+
+
 def display_map_legend(map_data: dict):
     """
     Display the map legend for the specified map data.
     """
     legends_html = generate_legend(map_data)
     components.html(legends_html, height=400, scrolling=True)
+
+
+def display_text(text: str):
+    st.markdown(
+        f"<p style='text-align: center;'>{text}</p>",
+        unsafe_allow_html=True,
+    )
+
+
+def display_title(text: str):
+    st.markdown(
+        f"<h1 style='text-align: center;'>{text}</h1>",
+        unsafe_allow_html=True,
+    )
 
 
 def report_error(message: str, exception: RuntimeError):
