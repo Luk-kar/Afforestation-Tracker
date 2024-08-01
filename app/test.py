@@ -8,13 +8,11 @@ from stages.server_connection import establish_connection
 establish_connection()
 
 
-# Function to get the current geolocation using the user's IP
 def get_current_location():
     g = geocoder.ip("me")
     return g.latlng
 
 
-# Set the latitude and longitude in session state based on the current location
 def set_lat_lon():
     default_latlng = get_current_location()
     return default_latlng[0], default_latlng[1]
@@ -50,12 +48,25 @@ folium.LatLngPopup().add_to(map)
 map_data = st_folium(map, width=725, height=500)
 update_coords_on_click_map(map_data)
 
-# Widget for manually updating latitude
-st.number_input("Latitude", value=st.session_state.latitude, key="latitude")
-st.number_input(
-    "Longitude",
-    value=st.session_state.longitude,
-    key="longitude",
-)
+col1, col2 = st.columns(2)  # Create two columns
+
+with col1:
+    st.number_input(
+        "Latitude",
+        value=st.session_state.latitude,
+        key="latitude",
+        step=0.5,
+        format="%.4f",
+    )
+
+with col2:
+    st.number_input(
+        "Longitude",
+        value=st.session_state.longitude,
+        key="longitude",
+        step=0.5,
+        format="%.4f",
+    )
+
 
 st.button("Use My Current Location", on_click=update_coords_on_click_btn)
