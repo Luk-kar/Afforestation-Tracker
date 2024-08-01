@@ -5,6 +5,7 @@ This module contains functions to retrieve data for a specific point on the map.
 # Third party
 import requests
 import ee
+import streamlit as st
 
 # Local
 from config import SIZE_SAMPLE_METERS
@@ -245,7 +246,7 @@ def get_address_from_point(lat: float, lon: float) -> str:
 
 
 @handle_ee_operations
-def get_map_point_data(roi: dict, lat: float, lon: float) -> dict:
+def get_map_point_data(roi: dict) -> dict:
     """
     Retrieves the data for a specific point on the map.
 
@@ -257,6 +258,7 @@ def get_map_point_data(roi: dict, lat: float, lon: float) -> dict:
     Returns:
         dict: The data for the specified point.
     """
+    lat, lon = st.session_state.latitude, st.session_state.longitude
 
     data = {
         "elevation": get_elevation_point(lat, lon),

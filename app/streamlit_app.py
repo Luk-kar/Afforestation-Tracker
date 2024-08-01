@@ -45,8 +45,7 @@ def streamlit_app():
     if not regions_data:
         return
 
-    if map_result and "last_clicked" in map_result and map_result["last_clicked"]:
-        handle_map_clicks(map_result)
+    handle_map_clicks(map_result)
 
     col1, col2, col3 = st.columns(3)  # Create two columns
 
@@ -103,16 +102,22 @@ def handle_map_clicks(map_result: dict):
     """Handle map clicks and display point data."""
 
     try:
-        last_click_lat, last_click_lng = (
-            map_result["last_clicked"]["lat"],
-            map_result["last_clicked"]["lng"],
-        )
-        st.session_state.latitude = last_click_lat
-        st.session_state.longitude = last_click_lng
 
-        point_data = get_map_point_data(ROI, last_click_lat, last_click_lng)
+        if map_result and "last_clicked" in map_result and map_result["last_clicked"]:
 
+            last_click_lat, last_click_lng = (
+                map_result["last_clicked"]["lat"],
+                map_result["last_clicked"]["lng"],
+            )
+
+            if last_click_lat != st.session_state.latitude:
+                st.session_state.latitude = last_click_lat
+            if last_click_lng != st.session_state.longitude:
+                st.session_state.longitude = last_click_lng
+
+        point_data = get_map_point_data(ROI)
         display_map_point_info(point_data)
+
     except RuntimeError as e:
         report_error("Failed to retrieve or display point data", e)
 
