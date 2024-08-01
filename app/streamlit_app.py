@@ -43,6 +43,32 @@ def streamlit_app():
     if not regions_data:
         return
 
+    col1, col2, col3 = st.columns(3)  # Create two columns
+
+    with col1:
+        st.number_input(
+            "Latitude",
+            value=st.session_state.latitude,
+            key="latitude",
+            step=0.5,
+            format="%.4f",
+        )
+
+    with col2:
+        st.number_input(
+            "Longitude",
+            value=st.session_state.longitude,
+            key="longitude",
+            step=0.5,
+            format="%.4f",
+        )
+
+    with col3:
+        st.markdown("<div style='height: 27px;'></div>", unsafe_allow_html=True)
+        st.button(
+            "Use My Current Location", on_click=update_coords_with_client_localization
+        )
+
     if map_result and "last_clicked" in map_result and map_result["last_clicked"]:
         handle_map_clicks(map_result)
 
@@ -75,11 +101,14 @@ def handle_map_clicks(map_result: dict):
     """Handle map clicks and display point data."""
 
     try:
-        lat, lon = (
+        last_click_lat, last_click_lng = (
             map_result["last_clicked"]["lat"],
             map_result["last_clicked"]["lng"],
         )
-        point_data = get_map_point_data(ROI, lat, lon)
+        st.session_state.latitude = last_click_lat
+        st.session_state.longitude = last_click_lng
+
+        point_data = get_map_point_data(ROI, last_click_lat, last_click_lng)
 
         display_map_point_info(point_data)
     except RuntimeError as e:
@@ -92,6 +121,10 @@ def display_legend(regions_data: dict):
         display_map_legend(regions_data["maps"])
     except RuntimeError as e:
         report_error("Failed to display map legend", e)
+
+
+def update_coords_with_client_localization():
+    st.session_state.latitude, st.session_state.longitude = get_client_location()
 
 
 if __name__ == "__main__":
