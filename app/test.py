@@ -48,7 +48,7 @@ folium.LatLngPopup().add_to(map)
 map_data = st_folium(map, width=725, height=500)
 update_coords_on_click_map(map_data)
 
-col1, col2 = st.columns(2)  # Create two columns
+col1, col2, col3 = st.columns(3)  # Create two columns
 
 with col1:
     st.number_input(
@@ -68,5 +68,6 @@ with col2:
         format="%.4f",
     )
 
-
-st.button("Use My Current Location", on_click=update_coords_on_click_btn)
+with col3:
+    st.markdown("<div style='height: 27px;'></div>", unsafe_allow_html=True)
+    st.button("Use My Current Location", on_click=update_coords_on_click_btn)
