@@ -38,7 +38,7 @@ if "latitude" not in st.session_state or "longitude" not in st.session_state:
 
 st.title("Geo-localization Position Display")
 
-map = folium.Map(zoom_start=6)
+map = folium.Map()
 folium.Marker(
     [st.session_state.latitude, st.session_state.longitude], popup="You are here!"
 ).add_to(map)
