@@ -51,7 +51,7 @@ def fetch_and_display_region_data():
     try:
         regions_data = get_region_data(ROI, MAP_DATA)
         folium_map = display_map(regions_data)
-        map_result = st_folium(folium_map, key="map")
+        map_result = st_folium(folium_map, key="map", width=725, height=500)
         return regions_data, map_result
     except RuntimeError as e:
         report_error("Failed to retrieve or display region data", e)

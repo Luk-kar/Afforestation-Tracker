@@ -1,14 +1,12 @@
 import streamlit as st
 import folium
-from streamlit_folium import st_folium, folium_static
+from streamlit_folium import st_folium
 import geocoder
 from stages.server_connection import establish_connection
 
-# Establish server connection
 establish_connection()
 
 
-# Function to get the current geo-localization position
 def get_current_location():
     g = geocoder.ip("me")
     return g.latlng
@@ -48,20 +46,17 @@ folium.LatLngPopup().add_to(map)
 
 map_data = st_folium(map, width=725, height=500)
 
-
 if map_data["last_clicked"]:
     update_coords_on_click(map_data)
 
 latitude = st.number_input("Latitude", value=st.session_state.latitude)
 longitude = st.number_input("Longitude", value=st.session_state.longitude)
 
-# Button to update the latitude and longitude to current location
 if st.button("Use My Current Location"):
     latlng = get_current_location()
     st.session_state.latitude = latlng[0]
     st.session_state.longitude = latlng[1]
 
-# This button is used to refresh the map based on input coordinates
 if st.button("Update Map"):
     st.session_state.update_map = True
 else:
