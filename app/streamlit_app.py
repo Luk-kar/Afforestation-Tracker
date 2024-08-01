@@ -37,11 +37,15 @@ def streamlit_app():
         return
 
     if "latitude" not in st.session_state or "longitude" not in st.session_state:
-        st.session_state.latitude, st.session_state.longitude = get_client_location()
+        # init the lat and lon session state
+        st.session_state.latitude, st.session_state.longitude = None, None
 
     regions_data, map_result = fetch_and_display_region_data()
     if not regions_data:
         return
+
+    if map_result and "last_clicked" in map_result and map_result["last_clicked"]:
+        handle_map_clicks(map_result)
 
     col1, col2, col3 = st.columns(3)  # Create two columns
 
@@ -68,9 +72,6 @@ def streamlit_app():
         st.button(
             "Use My Current Location", on_click=update_coords_with_client_localization
         )
-
-    if map_result and "last_clicked" in map_result and map_result["last_clicked"]:
-        handle_map_clicks(map_result)
 
     display_legend(regions_data)
 
