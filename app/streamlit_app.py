@@ -117,7 +117,6 @@ def handle_map_clicks(map_result: dict):
 
         point_data = get_map_point_data(ROI)
         display_map_point_info(point_data)
-
     except RuntimeError as e:
         report_error("Failed to retrieve or display point data", e)
 
