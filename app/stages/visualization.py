@@ -142,6 +142,12 @@ def display_map(data: dict) -> geemap.Map:
 
         gee_map.add_child(folium.LatLngPopup())
 
+        if "latitude" in st.session_state and "longitude" in st.session_state:
+            folium.Marker(
+                [st.session_state.latitude, st.session_state.longitude],
+                popup="Current Location",
+            ).add_to(gee_map)
+
         for layer in maps.values():
             add_layer_to_map(gee_map, layer)
 
