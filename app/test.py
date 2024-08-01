@@ -9,12 +9,7 @@ establish_connection()
 
 
 def get_current_location():
-    g = geocoder.ip("me")
-    return g.latlng
-
-
-def set_lat_lon():
-    default_latlng = get_current_location()
+    default_latlng = geocoder.ip("me")
     return default_latlng[0], default_latlng[1]
 
 
@@ -28,12 +23,12 @@ def update_coords_on_click_map(map_data):
         st.session_state.longitude = last_click_lng
 
 
-def update_coords_on_click_btn():
-    st.session_state.latitude, st.session_state.longitude = set_lat_lon()
+def update_coords():
+    st.session_state.latitude, st.session_state.longitude = get_current_location()
 
 
 if "latitude" not in st.session_state or "longitude" not in st.session_state:
-    st.session_state.latitude, st.session_state.longitude = set_lat_lon()
+    st.session_state.latitude, st.session_state.longitude = get_current_location()
 
 
 st.title("Geo-localization Position Display")
@@ -70,4 +65,4 @@ with col2:
 
 with col3:
     st.markdown("<div style='height: 27px;'></div>", unsafe_allow_html=True)
-    st.button("Use My Current Location", on_click=update_coords_on_click_btn)
+    st.button("Use My Current Location", on_click=update_coords)

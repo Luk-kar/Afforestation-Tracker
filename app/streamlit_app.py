@@ -16,7 +16,7 @@ from stages.visualization import (
     report_error,
 )
 from stages.data_acquisition.point import get_map_point_data, get_client_location
-from stages.data_acquisition.region import get_region_data
+from stages.data_acquisition.region import get_region_data, calculate_center
 from config import MAP_DATA, ROI
 
 
@@ -38,7 +38,8 @@ def streamlit_app():
 
     if "latitude" not in st.session_state or "longitude" not in st.session_state:
         # init the lat and lon session state
-        st.session_state.latitude, st.session_state.longitude = None, None
+        sahel_centroid = calculate_center(ROI["roi_coords"])
+        st.session_state.latitude, st.session_state.longitude = sahel_centroid
 
     regions_data, map_result = fetch_and_display_region_data()
     if not regions_data:
