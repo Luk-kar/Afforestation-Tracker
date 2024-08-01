@@ -277,6 +277,8 @@ def display_coordinate_input_panel():
 
 
 def update_coords_with_client_localization():
+    """Update the latitude and longitude with the user's location."""
+
     st.session_state.latitude, st.session_state.longitude = get_client_location()
 
 
@@ -288,16 +290,20 @@ def display_map_legend(map_data: dict):
     components.html(legends_html, height=400, scrolling=True)
 
 
-def display_text(text: str):
+def display_title(text: str):
+    """Display a title in the center of the page."""
+
     st.markdown(
-        f"<p style='text-align: center;'>{text}</p>",
+        f"<h1 style='text-align: center;'>{text}</h1>",
         unsafe_allow_html=True,
     )
 
 
-def display_title(text: str):
+def display_text(text: str):
+    """Display text in the center of the page."""
+
     st.markdown(
-        f"<h1 style='text-align: center;'>{text}</h1>",
+        f"<p style='text-align: center;'>{text}</p>",
         unsafe_allow_html=True,
     )
 

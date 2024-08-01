@@ -8,8 +8,8 @@ import ee
 import streamlit as st
 
 # Local
-from config import SIZE_SAMPLE_METERS
 import geocoder
+from config import SIZE_SAMPLE_METERS
 from stages.data_acquisition.gee_server import (
     fetch_total_precipitation_data,
     fetch_mean_soil_moisture_data,
@@ -251,9 +251,7 @@ def get_map_point_data(roi: dict) -> dict:
     Retrieves the data for a specific point on the map.
 
     Parameters:
-        roi (dict): The region of interest data.
-        lat (float): Latitude of the point.
-        lon (float): Longitude of the point.
+        roi (dict): The region of interest containing the periods of interest.
 
     Returns:
         dict: The data for the specified point.

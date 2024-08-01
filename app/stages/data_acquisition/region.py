@@ -208,8 +208,8 @@ def get_afforestation_candidates_data(
 
     Returns:
 
-    tuple: A tuple containing the slope, precipitation, soil moisture,
-    and world cover data layers.
+        tuple: A tuple containing the slope, precipitation, soil moisture,
+        and world cover data layers.
     """
 
     try:
