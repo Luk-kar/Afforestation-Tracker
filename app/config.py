@@ -47,6 +47,7 @@ MAP_DATA = {
                 "2400-3000 m": "FF0000",
             },
         },
+        "shown": False,
     },
     "slope": {
         "vis_params": {
@@ -65,6 +66,7 @@ MAP_DATA = {
                 "48-60°": "FF0000",
             },
         },
+        "shown": False,
     },
     "world_cover": {
         "vis_params": {
@@ -102,6 +104,7 @@ MAP_DATA = {
                 "Moss and Lichen": "FAE6A0",
             },
         },
+        "shown": False,
     },
     "soc_0_20cm": {
         "vis_params": {
@@ -120,6 +123,7 @@ MAP_DATA = {
                 "160-200 g/kg": "000000",
             },
         },
+        "shown": False,
     },
     "soil_moisture": {
         "vis_params": {
@@ -127,9 +131,9 @@ MAP_DATA = {
             "max": 0.5,
             "palette": ["red", "yellow", "green", "blue"],
         },
-        "name": "Root Zone Moisture %",
+        "name": "Root Zone Moisture",
         "legend": {
-            "title": "Root Zone Moisture %",
+            "title": "Root Zone Moisture",
             "legend_dict": {
                 "0.0-12.5": "FF0000",  # Red
                 "12.5-25.0.": "FFFF00",  # Yellow
@@ -137,6 +141,7 @@ MAP_DATA = {
                 "37.5-50.0": "0000FF",  # Blue
             },
         },
+        "shown": True,
     },
     "precipitation": {
         "vis_params": {
@@ -171,6 +176,7 @@ MAP_DATA = {
                 "1800-2000 mm": "FF0000",
             },
         },
+        "shown": True,
     },
     "afforestation_candidates": {
         "vis_params": {
@@ -186,5 +192,6 @@ MAP_DATA = {
                 "Suitable": "00FF00",
             },
         },
+        "shown": True,
     },
 }

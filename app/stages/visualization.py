@@ -21,6 +21,7 @@ def add_layer_to_map(gee_map: geemap.Map, layer: dict):
         data: ee.Image = layer["data"]
         vis_params: dict = layer["vis_params"]
         name: str = layer["name"]
+        shown: bool = layer["shown"]
 
         # Validate data types
         if not isinstance(data, ee.Image):
@@ -32,7 +33,9 @@ def add_layer_to_map(gee_map: geemap.Map, layer: dict):
 
         updated_vis_params = vis_params.copy()
         updated_vis_params["opacity"] = 0.6  # Set opacity to 60%
-        gee_map.addLayer(data, updated_vis_params, name)
+
+        gee_map.addLayer(data, updated_vis_params, name, shown=shown)
+
     except Exception as e:
         raise RuntimeError(f"Failed to add layer to map: {e}") from e
 
