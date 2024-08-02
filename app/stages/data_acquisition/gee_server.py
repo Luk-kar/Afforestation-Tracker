@@ -21,6 +21,7 @@ GEE_MAP_COLLECTIONS = {
 }
 
 WORLD_COVER_ESA_CODES = {
+    "No data / Ocean": -1,
     "Tree Cover": 10,
     "Shrubland": 20,
     "Grassland": 30,

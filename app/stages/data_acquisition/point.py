@@ -37,7 +37,7 @@ def get_rootzone_soil_moisture_point(
 
     Returns:
         float: Average soil moisture value at the given point for the specified date range,
-        or 0 if no data is available.
+        or -1 if no data is available.
     """
     validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
@@ -53,7 +53,11 @@ def get_rootzone_soil_moisture_point(
         .get("mean_soil_moisture_root_zone")
         .getInfo()
     )
-    return soil_moisture_value if soil_moisture_value is not None else 0
+
+    if soil_moisture_value is None:
+        soil_moisture_value = -1
+
+    return soil_moisture_value
 
 
 @handle_ee_operations
@@ -88,6 +92,9 @@ def get_precipitation_point(
         .getInfo()
     )
 
+    if precipitation_value is None:
+        precipitation_value = -1
+
     return precipitation_value
 
 
@@ -101,7 +108,7 @@ def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
         lon (float): Longitude of the point.
 
     Returns:
-        float: Soil organic carbon value at the given point, or 0 if no data is available.
+        float: Soil organic carbon value at the given point, or -1 if no data is available.
     """
     validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
@@ -117,6 +124,9 @@ def get_soil_organic_carbon_point(lat: float, lon: float) -> float:
         .getInfo()
     )
 
+    if carbon_value is None:
+        carbon_value = -1
+
     return carbon_value
 
 
@@ -131,7 +141,7 @@ def get_elevation_point(lat: float, lon: float) -> float:
         lon (float): Longitude of the point.
 
     Returns:
-        float: Elevation value at the given point, or 0 if no data is available.
+        float: Elevation value at the given point, or -1 if no data is available.
     """
     validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
@@ -144,6 +154,9 @@ def get_elevation_point(lat: float, lon: float) -> float:
         .get("elevation")
         .getInfo()
     )
+
+    if elevation_value is None:
+        elevation_value = -1
 
     return elevation_value
 
@@ -194,7 +207,7 @@ def get_world_cover_point(lat: float, lon: float) -> str:
         lon (float): Longitude of the point.
 
     Returns:
-        str: World cover value at the given point, or 'No data available' if no data is available.
+        str: World cover value at the given point, or `-1` if no data.
     """
     validate_coordinates(lat, lon)
     point = ee.Geometry.Point([lon, lat])
@@ -209,6 +222,9 @@ def get_world_cover_point(lat: float, lon: float) -> str:
         .get("world_cover")
         .getInfo()
     )
+
+    if world_cover_value is None:
+        world_cover_value = -1
 
     return world_cover_value
 

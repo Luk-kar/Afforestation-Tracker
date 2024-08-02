@@ -185,10 +185,12 @@ def display_map_point_info(data: dict):
         (
             lat_rounded,
             lon_rounded,
+            elevation_sanitized,
             afforestation_yes_no,
             slope_rounded,
             precipitation_rounded,
             soil_moisture_rounded,
+            soil_carbon_sanitized,
             world_cover,
         ) = map_point_text_format(data)
 
@@ -197,11 +199,11 @@ def display_map_point_info(data: dict):
         Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
         Address: {data['address']}\n
         Afforestation Candidate: **{afforestation_yes_no}**\n
-        Elevation: {data['elevation']} meters,
+        Elevation: {elevation_sanitized} meters,
         Slope: {slope_rounded}°,
         Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
         Yearly Precipitation: {precipitation_rounded} mm,
-        Soil Organic Carbon: {data['soil_organic_carbon']} g/kg,
+        Soil Organic Carbon: {soil_carbon_sanitized} g/kg,
         World Cover: {world_cover}
         """
 
@@ -222,16 +224,31 @@ def map_point_text_format(data: dict) -> tuple:
         Tuple containing the formatted text for the map point
     """
 
+    soil_carbon, elevation, soil_moisture, precipitation, slope = (
+        data["soil_organic_carbon"],
+        data["elevation"],
+        data["soil_moisture"],
+        data["precipitation"],
+        data["slope"],
+    )
+
+    no_data = "**No data**"
+
+    elevation_sanitized = elevation if elevation != -1 else no_data
+    soil_carbon_sanitized = soil_carbon if soil_carbon != -1 else no_data
+
     lat_rounded, lon_rounded = (round(data["lat"], 4), round(data["lon"], 4))
     afforestation_yes_no = "Yes" if data["afforestation_validation"] else "No"
-    slope_rounded = round(data["slope"], 1)
-    precipitation_rounded = round(data["precipitation"], 2)
-    soil_moisture_rounded = round(data["soil_moisture"] * 100, 2)
+    slope_rounded = round(slope, 1) if slope != -1 else no_data
+    precipitation_rounded = round(precipitation, 2) if precipitation != -1 else no_data
+    soil_moisture_rounded = (
+        round(data["soil_moisture"] * 100, 2) if soil_moisture != -1 else no_data
+    )
 
     world_cover_code = data["world_cover"]
     world_cover = next(
         (
-            name
+            "**" + name + "**"
             for name, code in WORLD_COVER_ESA_CODES.items()
             if code == world_cover_code
         ),
@@ -241,10 +258,12 @@ def map_point_text_format(data: dict) -> tuple:
     return (
         lat_rounded,
         lon_rounded,
+        elevation_sanitized,
         afforestation_yes_no,
         slope_rounded,
         precipitation_rounded,
         soil_moisture_rounded,
+        soil_carbon_sanitized,
         world_cover,
     )
 
