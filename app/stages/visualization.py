@@ -50,7 +50,7 @@ def generate_legend(map_legends: dict) -> str:
     style_section = """
     <style>
         .scrollable-legend {
-            height: 315px;
+            height: 340px;
             overflow-x: scroll;
             overflow-y: hidden;
             white-space: nowrap;
