@@ -12,7 +12,6 @@ import streamlit.components.v1 as components
 
 # Local
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
-from stages.data_acquisition.point import get_client_location
 
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
@@ -271,7 +270,7 @@ def map_point_text_format(data: dict) -> tuple:
 def display_coordinate_input_panel():
     """Display the coordinate input panel."""
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         st.number_input(
@@ -290,21 +289,6 @@ def display_coordinate_input_panel():
             step=0.5,
             format="%.4f",
         )
-
-    with col3:
-        st.markdown("<div style='height: 27px;'></div>", unsafe_allow_html=True)
-        st.button(
-            "Use My Current Location", on_click=update_coords_with_client_localization
-        )
-
-
-def update_coords_with_client_localization():
-    """Update the latitude and longitude with the user's location."""
-
-    # Init the temp session state variables
-    st.session_state["temp_latitude"], st.session_state["temp_longitude"] = (
-        get_client_location()
-    )
 
 
 def display_map_legend(map_data: dict):

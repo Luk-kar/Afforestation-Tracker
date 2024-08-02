@@ -303,16 +303,3 @@ def get_map_point_data(roi: dict) -> dict:
         data["world_cover"],
     )
     return data
-
-
-def get_client_location():
-    """
-    Get the latitude and longitude of the users's location.
-
-    Returns:
-        tuple: A tuple containing the latitude and longitude of the users's location.
-    """
-    current_location = geocoder.ip("me")
-    latitude = current_location.latlng[0]
-    longitude = current_location.latlng[1]
-    return latitude, longitude

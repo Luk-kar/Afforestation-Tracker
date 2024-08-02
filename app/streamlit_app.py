@@ -32,13 +32,6 @@ def streamlit_app():
     if not initialize_earth_engine():
         return  # Exit app
 
-    if "temp_latitude" in st.session_state and "temp_longitude" in st.session_state:
-        st.session_state["latitude"] = st.session_state["temp_latitude"]
-        st.session_state["longitude"] = st.session_state["temp_longitude"]
-
-        del st.session_state["temp_latitude"]
-        del st.session_state["temp_longitude"]
-
     elif "latitude" not in st.session_state or "longitude" not in st.session_state:
         setup_latitude_longitude_session()
 
