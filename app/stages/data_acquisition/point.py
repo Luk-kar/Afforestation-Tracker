@@ -299,4 +299,6 @@ def get_client_location():
     current_location = geocoder.ip("me")
     latitude = current_location.latlng[0]
     longitude = current_location.latlng[1]
+    # TODO
+    print(f"Latitude: {latitude}, Longitude: {longitude}")
     return latitude, longitude
