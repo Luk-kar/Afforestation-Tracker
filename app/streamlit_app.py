@@ -32,7 +32,14 @@ def streamlit_app():
     if not initialize_earth_engine():
         return  # Exit app
 
-    if "latitude" not in st.session_state or "longitude" not in st.session_state:
+    if "temp_latitude" in st.session_state and "temp_longitude" in st.session_state:
+        st.session_state["latitude"] = st.session_state["temp_latitude"]
+        st.session_state["longitude"] = st.session_state["temp_longitude"]
+
+        del st.session_state["temp_latitude"]
+        del st.session_state["temp_longitude"]
+
+    elif "latitude" not in st.session_state or "longitude" not in st.session_state:
         setup_latitude_longitude_session()
 
     regions_data, map_result = fetch_and_display_region_data()
@@ -60,7 +67,7 @@ def setup_latitude_longitude_session():
     """Setup the latitude and longitude session state in streamlit class"""
 
     sahel_centroid = calculate_center(ROI["roi_coords"])
-    st.session_state.latitude, st.session_state.longitude = sahel_centroid
+    st.session_state["latitude"], st.session_state["longitude"] = sahel_centroid
 
 
 def initialize_earth_engine() -> bool:
@@ -93,10 +100,10 @@ def update_latitude_longitude_session(map_result: dict):
         map_result["last_clicked"]["lng"],
     )
 
-    if last_click_lat != st.session_state.latitude:
-        st.session_state.latitude = last_click_lat
-    if last_click_lng != st.session_state.longitude:
-        st.session_state.longitude = last_click_lng
+    if last_click_lat != st.session_state["latitude"]:
+        st.session_state["latitude"] = last_click_lat
+    if last_click_lng != st.session_state["longitude"]:
+        st.session_state["longitude"] = last_click_lng
 
 
 def display_legend(regions_data: dict):

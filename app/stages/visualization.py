@@ -148,7 +148,7 @@ def display_map(data: dict) -> geemap.Map:
 
         if "latitude" in st.session_state and "longitude" in st.session_state:
             folium.Marker(
-                [st.session_state.latitude, st.session_state.longitude],
+                [st.session_state["latitude"], st.session_state["longitude"]],
                 popup="Current Location",
             ).add_to(gee_map)
 
@@ -257,7 +257,7 @@ def display_coordinate_input_panel():
     with col1:
         st.number_input(
             "Latitude",
-            value=st.session_state.latitude,
+            value=st.session_state["latitude"],
             key="latitude",
             step=0.5,
             format="%.4f",
@@ -266,7 +266,7 @@ def display_coordinate_input_panel():
     with col2:
         st.number_input(
             "Longitude",
-            value=st.session_state.longitude,
+            value=st.session_state["longitude"],
             key="longitude",
             step=0.5,
             format="%.4f",
@@ -282,7 +282,10 @@ def display_coordinate_input_panel():
 def update_coords_with_client_localization():
     """Update the latitude and longitude with the user's location."""
 
-    st.session_state.latitude, st.session_state.longitude = get_client_location()
+    # Init the temp session state variables
+    st.session_state["temp_latitude"], st.session_state["temp_longitude"] = (
+        get_client_location()
+    )
 
 
 def display_map_legend(map_data: dict):

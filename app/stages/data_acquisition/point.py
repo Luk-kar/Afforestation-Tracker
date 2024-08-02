@@ -256,7 +256,7 @@ def get_map_point_data(roi: dict) -> dict:
     Returns:
         dict: The data for the specified point.
     """
-    lat, lon = st.session_state.latitude, st.session_state.longitude
+    lat, lon = st.session_state["latitude"], st.session_state["longitude"]
 
     data = {
         "elevation": get_elevation_point(lat, lon),
@@ -299,6 +299,4 @@ def get_client_location():
     current_location = geocoder.ip("me")
     latitude = current_location.latlng[0]
     longitude = current_location.latlng[1]
-    # TODO
-    print(f"Latitude: {latitude}, Longitude: {longitude}")
     return latitude, longitude

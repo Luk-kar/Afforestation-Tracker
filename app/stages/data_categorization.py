@@ -42,10 +42,13 @@ def evaluate_afforestation_candidates(
     try:
         if (
             isinstance(world_cover, int)
-            and world_cover not in conditions["vegetation_mask"].values()
+            and world_cover not in WORLD_COVER_ESA_CODES.values()
         ):
 
-            raise ValueError("Provided world_cover code is not valid.")
+            raise ValueError(
+                "Provided world_cover code is not valid."
+                + f"world_cover: {world_cover}, {type(world_cover)}"
+            )
 
         if all(
             isinstance(item, ee.Image)
@@ -68,6 +71,10 @@ def evaluate_afforestation_candidates(
         else:
             raise TypeError(
                 "Input types must either all be Earth Engine Images or all be scalar values."
+                + f"world_cover: {world_cover} {type(world_cover)},"
+                + f"slope: {slope} {type(slope)},"
+                + f"precipitation: {precipitation} {type(precipitation)},"
+                + f"soil_moisture: {soil_moisture} {type(soil_moisture)}"
             )
 
     except ee.EEException as e:
