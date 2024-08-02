@@ -8,6 +8,7 @@ import ee
 
 # Local
 from stages.data_acquisition.gee_server import (
+    fetch_satellite_imagery_data,
     fetch_total_precipitation_data,
     fetch_mean_soil_moisture_data,
     fetch_elevation_data,
@@ -239,6 +240,25 @@ def get_afforestation_candidates_data(
     return slope, precipitation_annual, soil_moisture_rainy_season, world_cover
 
 
+def get_satellite_imagery_region(roi_coords: Roi_Coords) -> dict:
+    """
+    Retrieves the satellite imagery data for the specified region of interest.
+
+    Parameters:
+        roi_coords (list): List of coordinates defining the region of interest.
+
+    Returns:
+        dict: Dictionary containing the satellite imagery data for the specified region.
+    """
+    try:
+        is_valid_roi_coords(roi_coords)
+    except ValueError as e:
+        raise ValueError(f"Invalid ROI coordinates: {str(e)}") from e
+
+    roi = ee.Geometry.Polygon(roi_coords)
+    return fetch_satellite_imagery_data(roi)
+
+
 @handle_ee_operations
 def get_region_data(roi: dict, map_data: dict) -> dict:
     """
@@ -259,6 +279,10 @@ def get_region_data(roi: dict, map_data: dict) -> dict:
     data = {}
 
     center = calculate_center(roi["roi_coords"])
+
+    map_data["satellite_imagery"]["data"] = get_satellite_imagery_region(
+        roi["roi_coords"]
+    )
 
     # Elevation
     map_data["elevation"]["data"] = get_elevation_region(roi["roi_coords"])

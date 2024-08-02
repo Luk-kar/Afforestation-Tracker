@@ -88,19 +88,20 @@ def generate_legend(map_legends: dict) -> str:
 
     legend_html = "<div class='scrollable-legend'>"
     for key, info in reversed(list(map_legends.items())):
-        legend_html += f"""
-            <div class='legend-entry' id='{key}_legend'>
-                <div class='legend-title'>{info['legend']['title']}</div>
-                <div class='legend-details'>
-        """
-        for label, color in info.get("legend", {}).get("legend_dict", {}).items():
+        if "legend" in info:
             legend_html += f"""
-                    <div class='legend-detail'>
-                        <div class='color-indicator' style='background-color: #{color};'></div>
-                        <span>{label}</span>
-                    </div>
+                <div class='legend-entry' id='{key}_legend'>
+                    <div class='legend-title'>{info['legend']['title']}</div>
+                    <div class='legend-details'>
             """
-        legend_html += "</div></div>"
+            for label, color in info.get("legend", {}).get("legend_dict", {}).items():
+                legend_html += f"""
+                        <div class='legend-detail'>
+                            <div class='color-indicator' style='background-color: #{color};'></div>
+                            <span>{label}</span>
+                        </div>
+                """
+            legend_html += "</div></div>"
 
     legend_html += "</div>"
 

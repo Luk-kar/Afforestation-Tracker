@@ -30,6 +30,13 @@ ROI = {
 }
 
 MAP_DATA = {
+    "satellite_imagery": {
+        "vis_params": {
+            "bands": ["B4", "B3", "B2"],  # Example bands for RGB true color
+        },
+        "name": "Satellite Imagery",
+        "shown": False,
+    },
     "elevation": {
         "vis_params": {
             "min": 0,
@@ -136,7 +143,7 @@ MAP_DATA = {
             "title": "Root Zone Moisture",
             "legend_dict": {
                 "0.0-12.5": "FF0000",  # Red
-                "12.5-25.0.": "FFFF00",  # Yellow
+                "12.5-25.0": "FFFF00",  # Yellow
                 "25.0.-37.5": "008000",  # Green
                 "37.5-50.0": "0000FF",  # Blue
             },

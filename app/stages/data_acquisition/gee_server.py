@@ -13,11 +13,12 @@ from config import SIZE_SAMPLE_METERS
 # Google Earth Engine Collections
 # All of the data is open-source, Google provides the server side computation
 GEE_MAP_COLLECTIONS = {
-    "rootzone_soil_moisture": "NASA/SMAP/SPL4SMGP/007",
-    "precipitation": "UCSB-CHG/CHIRPS/DAILY",
-    "elevation": "USGS/SRTMGL1_003",
-    "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",
-    "world_type_terrain_cover": "ESA/WorldCover/v100/2020",
+    "rootzone_soil_moisture": "NASA/SMAP/SPL4SMGP/007",  # https://developers.google.com/earth-engine/datasets/catalog/NASA_SMAP_SPL4SMGP_007
+    "precipitation": "UCSB-CHG/CHIRPS/DAILY",  # https://developers.google.com/earth-engine/datasets/catalog/UCSB-CHG_CHIRPS_DAILY
+    "elevation": "USGS/SRTMGL1_003",  # https://developers.google.com/earth-engine/datasets/catalog/USGS_SRTMGL1_003
+    "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",  # https://developers.google.com/earth-engine/datasets/catalog/ISDASOIL_Africa_v1_carbon_total
+    "world_type_terrain_cover": "ESA/WorldCover/v100/2020",  # https://developers.google.com/earth-engine/datasets/catalog/ESA_WorldCover_v100
+    "satellite_imagery": "COPERNICUS/S2_HARMONIZED",  # https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_HARMONIZED
 }
 
 WORLD_COVER_ESA_CODES = {
@@ -34,6 +35,30 @@ WORLD_COVER_ESA_CODES = {
     "Mangroves": 95,
     "Moss and Lichen": 100,
 }
+
+
+@handle_ee_operations
+def fetch_satellite_imagery_data(geometry: ee.Geometry) -> ee.Image:
+    """
+    Fetches the satellite imagery data for a given date range and geographical area.
+
+    Parameters:
+        date_range (tuple): A tuple of (start_date, end_date) in 'YYYY-MM-DD' format.
+        geometry (ee.Geometry): The geographic area for the satellite imagery.
+
+    Returns:
+        ee.Image: An image representing the satellite imagery over the specified period and area.
+    """
+
+    satellite_imagery = ee.ImageCollection(GEE_MAP_COLLECTIONS["satellite_imagery"])
+    satellite_image = (
+        satellite_imagery.filterBounds(geometry)
+        .first()
+        .clip(geometry)
+        .select(["B4", "B3", "B2"])
+    )
+
+    return satellite_image
 
 
 @handle_ee_operations
