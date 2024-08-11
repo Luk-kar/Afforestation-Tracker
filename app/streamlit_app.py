@@ -126,9 +126,9 @@ if __name__ == "__main__":
 
     try:
         streamlit_app()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         if (
             "[If exception is silent, it's a false positive error from streamlit]"
-            not in e
+            not in str(e)
         ):
             logging.error(e)

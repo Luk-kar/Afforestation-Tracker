@@ -373,7 +373,11 @@ def display_client_coordinates():
         longitude = round(longitude, precision)
 
     # Display center-aligned text
-    centered_text = f"<div style='text-align: center'>Your Latitude: <em>{latitude}</em>, Your Longitude: <em>{longitude}</em></div>"
+    centered_text = (
+        "<div style='text-align: center'>"
+        + f"Your Latitude: <em>{latitude}</em>, Your Longitude: <em>{longitude}</em>"
+        + "</div>"
+    )
     st.markdown(
         centered_text,
         unsafe_allow_html=True,

@@ -8,7 +8,6 @@ import ee
 import streamlit as st
 
 # Local
-import geocoder
 from config import SIZE_SAMPLE_METERS
 from stages.data_acquisition.gee_server import (
     fetch_total_precipitation_data,
