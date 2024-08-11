@@ -213,7 +213,10 @@ def display_map_point_info(data: dict):
             st.error(result)
 
     except Exception as e:
-        raise RuntimeError(f"Failed to display map point information: {e}") from e
+        raise RuntimeError(
+            f"Failed to display map point information: {e}\n"
+            + "[If exception is silent, it's a false positive error from streamlit]"
+        ) from e
 
 
 def map_point_text_format(data: dict) -> tuple:
