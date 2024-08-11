@@ -5,7 +5,6 @@ This module contains functions to retrieve data for a specific point on the map.
 # Third party
 import requests
 import ee
-import streamlit as st
 
 # Local
 from config import SIZE_SAMPLE_METERS
@@ -260,33 +259,34 @@ def get_address_from_point(lat: float, lon: float) -> str:
         return f"Network error during geocoding: {str(e)}"
 
 
+# @st.cache_data
 @handle_ee_operations
-def get_map_point_data(roi: dict) -> dict:
+def get_map_point_data(lat: float, lon: float, periods: dict) -> dict:
     """
     Retrieves the data for a specific point on the map.
 
     Parameters:
-        roi (dict): The region of interest containing the periods of interest.
+        lat (float): Latitude of the point.
+        lon (float): Longitude of the point.
+        periods (dict): The date range for the soil moisture and precipitation data
 
     Returns:
         dict: The data for the specified point.
     """
-    lat, lon = st.session_state["latitude"], st.session_state["longitude"]
-
     data = {
         "elevation": get_elevation_point(lat, lon),
         "slope": get_slope_point(lat, lon),
         "soil_moisture": get_rootzone_soil_moisture_point(
             lat,
             lon,
-            roi["periods"]["soil_moisture"]["start_date"],
-            roi["periods"]["soil_moisture"]["end_date"],
+            periods["soil_moisture"]["start_date"],
+            periods["soil_moisture"]["end_date"],
         ),
         "precipitation": get_precipitation_point(
             lat,
             lon,
-            roi["periods"]["precipitation"]["start_date"],
-            roi["periods"]["precipitation"]["end_date"],
+            periods["precipitation"]["start_date"],
+            periods["precipitation"]["end_date"],
         ),
         "soil_organic_carbon": get_soil_organic_carbon_point(lat, lon),
         "world_cover": get_world_cover_point(lat, lon),

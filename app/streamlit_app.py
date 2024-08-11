@@ -17,7 +17,6 @@ from stages.visualization import (
     display_title,
     display_map,
     display_coordinate_input_panel,
-    display_client_coordinates,
     display_map_point_info,
     display_map_legend,
     report_error,
@@ -37,7 +36,7 @@ def streamlit_app():
     if not initialize_earth_engine():
         return  # Exit app
 
-    elif "latitude" not in st.session_state or "longitude" not in st.session_state:
+    if "latitude" not in st.session_state or "longitude" not in st.session_state:
         setup_latitude_longitude_session()
 
     regions_data, map_result = fetch_and_display_region_data()
@@ -50,7 +49,8 @@ def streamlit_app():
     if is_map_clicked:
         update_latitude_longitude_session(map_result)
 
-    point_data = get_map_point_data(ROI)
+    lat, lon = st.session_state["latitude"], st.session_state["longitude"]
+    point_data = get_map_point_data(lat, lon, ROI["periods"])
     display_map_point_info(point_data)
 
     # The display_coordinate_input_panel() is called here
@@ -59,8 +59,6 @@ def streamlit_app():
     # after widget instantiation.
     # https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state
     display_coordinate_input_panel()
-
-    display_client_coordinates()
 
     display_legend(regions_data)
 
