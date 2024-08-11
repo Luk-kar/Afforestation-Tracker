@@ -322,6 +322,6 @@ def display_text(text: str):
 
 
 def report_error(message: str, exception: RuntimeError):
-    """Report an error and stop the app."""
+    """Report an error to the user and stop the app."""
     st.error(f"{message}: {exception}")
     st.stop()

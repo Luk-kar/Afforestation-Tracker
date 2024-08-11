@@ -29,6 +29,17 @@ ROI = {
     },
 }
 
+# Google Earth Engine Collections
+# All of the data is open-source, Google provides the server side computation
+GEE_MAP_COLLECTIONS = {
+    "rootzone_soil_moisture": "NASA/SMAP/SPL4SMGP/007",  # https://developers.google.com/earth-engine/datasets/catalog/NASA_SMAP_SPL4SMGP_007
+    "precipitation": "UCSB-CHG/CHIRPS/DAILY",  # https://developers.google.com/earth-engine/datasets/catalog/UCSB-CHG_CHIRPS_DAILY
+    "elevation": "USGS/SRTMGL1_003",  # https://developers.google.com/earth-engine/datasets/catalog/USGS_SRTMGL1_003
+    "soil_organic_carbon": "ISDASOIL/Africa/v1/carbon_total",  # https://developers.google.com/earth-engine/datasets/catalog/ISDASOIL_Africa_v1_carbon_total
+    "world_type_terrain_cover": "ESA/WorldCover/v100/2020",  # https://developers.google.com/earth-engine/datasets/catalog/ESA_WorldCover_v100
+    "satellite_imagery": "COPERNICUS/S2_HARMONIZED",  # https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_HARMONIZED
+}
+
 MAP_DATA = {
     "satellite_imagery": {
         "vis_params": {

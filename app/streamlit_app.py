@@ -3,6 +3,9 @@ This script contains the Streamlit app logic and is the entry point for the Stre
 It initializes the Earth Engine module, retrieves the region data, and displays the map.
 """
 
+# Python
+import logging
+
 # Third party
 import streamlit as st
 from streamlit_folium import st_folium
@@ -21,6 +24,7 @@ from stages.visualization import (
 from stages.data_acquisition.point import get_map_point_data
 from stages.data_acquisition.region import get_region_data, calculate_center
 from config import MAP_DATA, ROI
+from logger import set_logging_level
 
 
 def streamlit_app():
@@ -48,9 +52,11 @@ def streamlit_app():
     point_data = get_map_point_data(ROI)
     display_map_point_info(point_data)
 
-    # Ensure display_coordinate_input_panel() is called here
-    # to prevent StreamlitAPIException by avoiding updates
-    # to session state after widget instantiation.
+    # The display_coordinate_input_panel() is called here
+    # to prevent StreamlitAPIException.
+    # It avoids updates to session state
+    # after widget instantiation.
+    # https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state
     display_coordinate_input_panel()
 
     display_legend(regions_data)
@@ -69,8 +75,9 @@ def initialize_earth_engine() -> bool:
         establish_connection()
         return True
     except RuntimeError as e:
-        report_error("Failed to initialize Earth Engine module", e)
-        return False
+        error = "Failed to initialize Earth Engine module"
+        report_error(error, e)
+        raise RuntimeError(error) from e
 
 
 def fetch_and_display_region_data():
@@ -81,8 +88,9 @@ def fetch_and_display_region_data():
         map_result = st_folium(folium_map, key="map", width=725, height=500)
         return regions_data, map_result
     except RuntimeError as e:
-        report_error("Failed to retrieve or display region data", e)
-        return None
+        error = "Failed to retrieve or display region data"
+        report_error(error, e)
+        raise RuntimeError(error) from e
 
 
 def update_latitude_longitude_session(map_result: dict):
@@ -104,8 +112,20 @@ def display_legend(regions_data: dict):
     try:
         display_map_legend(regions_data["maps"])
     except RuntimeError as e:
-        report_error("Failed to display map legend", e)
+        error = "Failed to display map legend"
+        report_error(error, e)
+        raise RuntimeError(error) from e
 
 
 if __name__ == "__main__":
-    streamlit_app()
+
+    set_logging_level()
+
+    try:
+        streamlit_app()
+    except Exception as e:
+        if (
+            "[If exception is silent, it's a false positive error from streamlit]"
+            not in e
+        ):
+            logging.error(e)
