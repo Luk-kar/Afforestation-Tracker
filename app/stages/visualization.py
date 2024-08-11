@@ -325,3 +325,56 @@ def report_error(message: str, exception: RuntimeError):
     """Report an error to the user and stop the app."""
     st.error(f"{message}: {exception}")
     st.stop()
+
+
+def display_client_coordinates():
+    """Display the client's current geolocation."""
+    # HTML + JavaScript code to fetch geolocation and pass it back to Streamlit
+    geolocation_script = """
+    <script>
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            // Streamlit function to send data back to the server
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                data: {latitude: lat, longitude: lon}
+            }, '*');
+        },
+        (err) => {
+            console.error(err);
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                data: {latitude: 'Error', longitude: 'Error'}
+            }, '*');
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        }
+    );
+    </script>
+    """
+    # Render the JavaScript code in an HTML frame
+    components.html(
+        geolocation_script, height=0
+    )  # Height set to 0 as no output is directly visible
+
+    # Retrieve the data sent back by JavaScript
+    latitude = st.session_state.get("latitude", "Waiting for geolocation...")
+    longitude = st.session_state.get("longitude", "Waiting for geolocation...")
+
+    # Sanitize the latitude and longitude values
+    if isinstance(latitude, float) and isinstance(longitude, float):
+        precision = 4
+        latitude = round(latitude, precision)
+        longitude = round(longitude, precision)
+
+    # Display center-aligned text
+    centered_text = f"<div style='text-align: center'>Your Latitude: <em>{latitude}</em>, Your Longitude: <em>{longitude}</em></div>"
+    st.markdown(
+        centered_text,
+        unsafe_allow_html=True,
+    )
