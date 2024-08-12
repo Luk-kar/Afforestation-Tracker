@@ -12,7 +12,11 @@ import ee
 # Local
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
-CONDITIONS = {
+# NOTE:
+# `CONDITIONS` variable is a global created during streamlit app initialization.
+# DO NOT CREATE any global variables with THE SAME NAME!!!
+# Otherwise, the streamlit app will not work correctly.
+_CONDITIONS = {
     "slope": 15,
     "precipitation": 200,
     "moisture": 0.2,
@@ -56,7 +60,7 @@ def evaluate_afforestation_candidates(
         ):
 
             return evaluate_with_ee_images(
-                slope, precipitation, soil_moisture, world_cover, CONDITIONS
+                slope, precipitation, soil_moisture, world_cover, _CONDITIONS
             )
 
         elif all(
@@ -65,7 +69,7 @@ def evaluate_afforestation_candidates(
         ) and isinstance(world_cover, int):
 
             return evaluate_with_scalars(
-                slope, precipitation, soil_moisture, world_cover, CONDITIONS
+                slope, precipitation, soil_moisture, world_cover, _CONDITIONS
             )
 
         else:

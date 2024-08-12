@@ -57,8 +57,12 @@ from app.stages.data_acquisition.region import (
     get_afforestation_candidates_region,
 )
 from app.stages.data_acquisition.region import calculate_center
-from app.stages.data_categorization import evaluate_afforestation_candidates, CONDITIONS
+from app.stages.data_categorization import (
+    evaluate_afforestation_candidates,
+    _CONDITIONS,
+)
 from app.stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
+from app.stages.visualization import display_map, display_map_point_info
 
 
 class TestConnectionToGoogleEarthEngine(unittest.TestCase):
@@ -70,7 +74,7 @@ class TestConnectionToGoogleEarthEngine(unittest.TestCase):
     def setUpClass(cls):
         """Sets up test environment and initial conditions before each test."""
 
-        print("Testing connection to Google Earth Engine...")
+        print("\nTesting connection to Google Earth Engine:")
         cls.service_account, cls.private_key = get_environment_variables()
 
     def test_get_environment_variables_success(self):
@@ -140,7 +144,7 @@ class TestMapDataCollections(unittest.TestCase):
     def setUpClass(cls):
         """Establish connection to Google Earth Engine before each test."""
 
-        print("Testing Data Map Collections on Google Earth Engine...")
+        print("\nTesting Data Map Collections on Google Earth Engine:")
         establish_connection()
 
     def test_collections_exist(self):
@@ -201,7 +205,7 @@ class TestGetPointData(unittest.TestCase):
         """Establish connection to Google Earth Engine before each test."""
 
         print(
-            "Testing fetching point data from Google Earth Engine and OpenStreetMap..."
+            "\nTesting fetching point data from Google Earth Engine and OpenStreetMap:"
         )
         establish_connection()
 
@@ -300,7 +304,7 @@ class TestRegionData(unittest.TestCase):
     def setUpClass(cls):
         """Establish connection to Google Earth Engine before each test."""
 
-        print("Testing fetching region data from Google Earth Engine...")
+        print("\nTesting fetching region data from Google Earth Engine:")
         establish_connection()
 
     def setUp(self):
@@ -397,15 +401,15 @@ class TestCandidateForAfforestation(unittest.TestCase):
 
     data = {
         "true": {
-            "slope": CONDITIONS["slope"],
-            "precipitation": CONDITIONS["precipitation"],
-            "soil_moisture": CONDITIONS["moisture"],
+            "slope": _CONDITIONS["slope"],
+            "precipitation": _CONDITIONS["precipitation"],
+            "soil_moisture": _CONDITIONS["moisture"],
             "world_cover": WORLD_COVER_ESA_CODES["Grassland"],
         },
         "false": {
-            "slope": CONDITIONS["slope"] - 1,
-            "precipitation": CONDITIONS["precipitation"] - 1,
-            "soil_moisture": CONDITIONS["moisture"] - 0.1,
+            "slope": _CONDITIONS["slope"] - 1,
+            "precipitation": _CONDITIONS["precipitation"] - 1,
+            "soil_moisture": _CONDITIONS["moisture"] - 0.1,
             "world_cover": WORLD_COVER_ESA_CODES["Tree Cover"],
         },
         "invalid": {
@@ -420,7 +424,7 @@ class TestCandidateForAfforestation(unittest.TestCase):
     def setUpClass(cls):
         """Establish connection to Google Earth Engine before each test."""
 
-        print("Testing evaluating afforestation candidates for the point and region...")
+        print("\nTesting evaluating afforestation candidates for the point and region:")
 
     def setUp(self):
         """Await the connection to Google Earth Engine before each test to not overload the server."""
@@ -466,11 +470,14 @@ class TestCandidateForAfforestation(unittest.TestCase):
             )
 
 
+# Test UI components
+class TestMapVisualization(unittest.TestCase):
+    pass
+
+
 if __name__ == "__main__":
     unittest.main()
 
-
-# Test UI components
 
 # Test map visualization if is rendered
 
