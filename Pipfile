@@ -8,6 +8,7 @@ geemap = "*"
 streamlit = "*"
 streamlit-folium = "*"
 folium = "*"
+cryptography = "*"
 
 [dev-packages]
 pylint = "*"
