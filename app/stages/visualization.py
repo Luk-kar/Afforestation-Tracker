@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 
 # Local
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
+from config import UI_STRINGS
 
 
 def add_layer_to_map(gee_map: geemap.Map, layer: dict):
@@ -86,24 +87,7 @@ def generate_legend(map_legends: dict) -> str:
     </style>
     """
 
-    legend_html = "<div class='scrollable-legend'>"
-    for key, info in reversed(list(map_legends.items())):
-        if "legend" in info:
-            legend_html += f"""
-                <div class='legend-entry' id='{key}_legend'>
-                    <div class='legend-title'>{info['legend']['title']}</div>
-                    <div class='legend-details'>
-            """
-            for label, color in info.get("legend", {}).get("legend_dict", {}).items():
-                legend_html += f"""
-                        <div class='legend-detail'>
-                            <div class='color-indicator' style='background-color: #{color};'></div>
-                            <span>{label}</span>
-                        </div>
-                """
-            legend_html += "</div></div>"
-
-    legend_html += "</div>"
+    legend_html = generate_legend_html(map_legends)
 
     dragging_script = """
     <script>
@@ -130,6 +114,59 @@ def generate_legend(map_legends: dict) -> str:
     """
 
     return style_section + legend_html + dragging_script
+
+
+def generate_legend_html(map_legends: dict) -> str:
+    """
+    Generate the HTML for the map legend using the provided legend data.
+
+    Returns:
+        str: HTML string for the map legend
+    """
+
+    legend_entries = generate_legend_entries(map_legends)
+
+    legend_html = generate_scrollable_legend(legend_entries)
+    return legend_html
+
+
+def generate_scrollable_legend(legend_entries: str) -> str:
+    """
+    Generate the scrollable legend HTML.
+
+    Returns:
+        str: HTML string for the scrollable legend
+    """
+
+    legend_html = "<div class='scrollable-legend'>" + legend_entries + "</div>"
+    return legend_html
+
+
+def generate_legend_entries(map_legends: dict) -> str:
+    """
+    Generate the legend entries HTML.
+
+    Returns:
+        str: HTML string for the legend entries
+    """
+
+    legend_entries = ""
+    for key, info in reversed(list(map_legends.items())):
+        if "legend" in info:
+            legend_entries += f"""
+                <div class='legend-entry' id='{key}_legend'>
+                    <div class='legend-title'>{info['legend']['title']}</div>
+                    <div class='legend-details'>
+            """
+            for label, color in info.get("legend", {}).get("legend_dict", {}).items():
+                legend_entries += f"""
+                        <div class='legend-detail'>
+                            <div class='color-indicator' style='background-color: #{color};'></div>
+                            <span>{label}</span>
+                        </div>
+                """
+            legend_entries += "</div></div>"
+    return legend_entries
 
 
 def display_map(data: dict) -> geemap.Map:
@@ -285,7 +322,7 @@ def display_coordinate_input_panel():
 
     with col1:
         st.number_input(
-            "Latitude",
+            UI_STRINGS["coordinate_input_panel"]["col1"],
             value=st.session_state["latitude"],
             key="latitude",
             step=0.5,
@@ -294,7 +331,7 @@ def display_coordinate_input_panel():
 
     with col2:
         st.number_input(
-            "Longitude",
+            UI_STRINGS["coordinate_input_panel"]["col2"],
             value=st.session_state["longitude"],
             key="longitude",
             step=0.5,

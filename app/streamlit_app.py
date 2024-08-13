@@ -23,15 +23,15 @@ from stages.visualization import (
 )
 from stages.data_acquisition.point import get_map_point_data
 from stages.data_acquisition.region import get_region_data, calculate_center
-from config import MAP_DATA, ROI
+from config import UI_STRINGS, MAP_DATA, ROI
 from logger import set_logging_level
 
 
 def streamlit_app():
     """Main Streamlit app function."""
 
-    display_title("Afforestation Tracker 🗺️🌴")
-    display_text("Click on the map to view data for a specific point 👆")
+    display_title(UI_STRINGS["title"])
+    display_text(UI_STRINGS["subtitle"])
 
     if not initialize_earth_engine():
         return  # Exit app
