@@ -12,6 +12,7 @@ import random
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
+# To avoid overloading the server
 SERVER_PAUSE = random.uniform(0.5, 1.0)
 
 

@@ -8,11 +8,12 @@ geemap = "*"
 streamlit = "*"
 streamlit-folium = "*"
 folium = "*"
-cryptography = "*"
 
 [dev-packages]
 pylint = "*"
 vulture = "*"
+cryptography = "*"
+selenium = "*"
 
 [requires]
 python_version = "3.10"
