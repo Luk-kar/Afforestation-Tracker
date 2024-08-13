@@ -326,7 +326,7 @@ def display_coordinate_input_panel():
 
     with col1:
         st.number_input(
-            UI_STRINGS["coordinate_input_panel"]["col1"],
+            "Latitude",
             value=st.session_state["latitude"],
             key="latitude",
             step=0.5,
@@ -335,7 +335,7 @@ def display_coordinate_input_panel():
 
     with col2:
         st.number_input(
-            UI_STRINGS["coordinate_input_panel"]["col2"],
+            "Longitude",
             value=st.session_state["longitude"],
             key="longitude",
             step=0.5,

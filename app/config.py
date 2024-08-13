@@ -10,10 +10,6 @@ stages.
 UI_STRINGS = {
     "title": "Afforestation Tracker 🗺️🌴",
     "subtitle": "Click on the map to view data for a specific point 👆",
-    "coordinate_input_panel": {
-        "col1": "Latitude",
-        "col2": "Longitude",
-    },
 }
 
 SIZE_SAMPLE_METERS = 100  # google earth engine sample size

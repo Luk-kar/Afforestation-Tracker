@@ -7,10 +7,18 @@ from typing import List, Literal, Dict, TypedDict, Tuple
 import sys
 import time
 import random
+import subprocess
 
 # Third party
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 # To avoid overloading the server
 SERVER_PAUSE = random.uniform(0.5, 1.0)
@@ -496,8 +504,74 @@ class TestCandidateForAfforestation(unittest.TestCase):
 
 
 # Test UI components
-class TestMapVisualization(unittest.TestCase):
-    pass
+class TestUIComponents(unittest.TestCase):
+
+    selectors = {
+        "title": "//div[contains(@class, 'stMarkdown') and contains(., 'Afforestation Tracker 🗺️🌴')]",
+        "subtitle": "//div[contains(@class, 'stMarkdown') and contains(., 'Click on the map to view data for a specific point 👆')]",
+        "map": "//div[contains(@class, 'stDeckGlJsonChart')]",
+    }
+
+    @classmethod
+    def setUpClass(cls):
+
+        # Start the Streamlit app
+        app_path = os.path.join(
+            os.path.dirname(__file__), "..", "app", "streamlit_app.py"
+        )
+        cls.streamlit_process = subprocess.Popen(
+            ["streamlit", "run", app_path, "--server.headless", "true"]
+        )
+
+        # Allow some time for the app to start
+        time.sleep(5)
+
+        # Set up the Selenium WebDriver (assuming you have Chrome installed)
+        options = webdriver.ChromeOptions()
+        # options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        cls.driver = webdriver.Chrome(options=options)
+
+        cls.driver.get("http://localhost:8501")
+
+        time.sleep(40)
+
+        # Refresh the page to be assured that the app is loaded correctly
+        cls.driver.refresh()
+        print("Page refreshed")
+
+        # Wait for reload
+        time.sleep(30)
+
+        # Set up the wait
+        cls.driver_wait = WebDriverWait(cls.driver, 10)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Close the browser and terminate the Streamlit app process
+        cls.driver.quit()
+        cls.streamlit_process.terminate()
+
+    def test_title_exists(self):
+        """Test if the title element exists."""
+
+        title = self.selectors["title"]
+
+        try:
+            self.assertTrue(self.driver.find_element(By.XPATH, title))
+        except NoSuchElementException:
+            self.fail("Title element does not exist.")
+
+    def test_subtitles_exists(self):
+        """Test if the subtitle element exists."""
+
+        subtitle = self.selectors["subtitle"]
+
+        try:
+            self.assertTrue(self.driver.find_element(By.XPATH, subtitle))
+        except NoSuchElementException:
+            self.fail("Subtitle element does not exist.")
 
 
 if __name__ == "__main__":
