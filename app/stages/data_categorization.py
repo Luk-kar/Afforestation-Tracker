@@ -12,20 +12,6 @@ import ee
 # Local
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
-# NOTE:
-# `CONDITIONS` variable is a global created during streamlit app initialization.
-# DO NOT CREATE any global variables with THE SAME NAME!!!
-# Otherwise, the streamlit app will not work correctly.
-_CONDITIONS = {
-    "slope": 15,
-    "precipitation": 200,
-    "moisture": 0.2,
-    "vegetation_mask": {
-        "grassland": WORLD_COVER_ESA_CODES["Grassland"],
-        "barren_land": WORLD_COVER_ESA_CODES["Bare / Sparse Vegetation"],
-    },
-}
-
 
 def evaluate_afforestation_candidates(
     slope: Union[ee.Image, int, float],
@@ -42,6 +28,20 @@ def evaluate_afforestation_candidates(
     """
     # Centralized handling of conditions to uniformly assess
     # suitability across both point and regional data
+
+    # NOTE:
+    # DO NOT MOVE THIS CONSTANT OUTSIDE TO THE GLOBAL SCOPE!!!
+    # For unknown reasons, the app fails render UI elements silently
+    # when the constant is defined outside the function scope.
+    CONDITIONS = {
+        "slope": 15,
+        "precipitation": 200,
+        "moisture": 0.2,
+        "vegetation_mask": {
+            "grassland": WORLD_COVER_ESA_CODES["Grassland"],
+            "barren_land": WORLD_COVER_ESA_CODES["Bare / Sparse Vegetation"],
+        },
+    }
 
     try:
         if (
@@ -60,7 +60,7 @@ def evaluate_afforestation_candidates(
         ):
 
             return evaluate_with_ee_images(
-                slope, precipitation, soil_moisture, world_cover, _CONDITIONS
+                slope, precipitation, soil_moisture, world_cover, CONDITIONS
             )
 
         elif all(
@@ -69,7 +69,7 @@ def evaluate_afforestation_candidates(
         ) and isinstance(world_cover, int):
 
             return evaluate_with_scalars(
-                slope, precipitation, soil_moisture, world_cover, _CONDITIONS
+                slope, precipitation, soil_moisture, world_cover, CONDITIONS
             )
 
         else:

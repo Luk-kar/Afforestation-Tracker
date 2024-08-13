@@ -60,10 +60,23 @@ from app.stages.data_acquisition.region import (
 from app.stages.data_acquisition.region import calculate_center
 from app.stages.data_categorization import (
     evaluate_afforestation_candidates,
-    _CONDITIONS,
 )
 from app.stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 from app.stages.visualization import display_map, display_map_point_info
+
+
+def check_internet_connection():
+    try:
+        import requests
+
+        # Change if google is blocked in your country
+        requests.get("https://www.google.com")
+    except requests.ConnectionError:
+        print("No internet connection available. Aborting tests.")
+        sys.exit()
+
+
+check_internet_connection()
 
 
 class TestConnectionToGoogleEarthEngine(unittest.TestCase):
@@ -400,17 +413,28 @@ class TestCandidateForAfforestation(unittest.TestCase):
     soil_moisture_period: Period = periods["soil_moisture"].values()
     precipitation_period: Period = periods["precipitation"].values()
 
+    # The same like within the app
+    CONDITIONS = {
+        "slope": 15,
+        "precipitation": 200,
+        "moisture": 0.2,
+        "vegetation_mask": {
+            "grassland": WORLD_COVER_ESA_CODES["Grassland"],
+            "barren_land": WORLD_COVER_ESA_CODES["Bare / Sparse Vegetation"],
+        },
+    }
+
     data = {
         "true": {
-            "slope": _CONDITIONS["slope"],
-            "precipitation": _CONDITIONS["precipitation"],
-            "soil_moisture": _CONDITIONS["moisture"],
+            "slope": CONDITIONS["slope"],
+            "precipitation": CONDITIONS["precipitation"],
+            "soil_moisture": CONDITIONS["moisture"],
             "world_cover": WORLD_COVER_ESA_CODES["Grassland"],
         },
         "false": {
-            "slope": _CONDITIONS["slope"] - 1,
-            "precipitation": _CONDITIONS["precipitation"] - 1,
-            "soil_moisture": _CONDITIONS["moisture"] - 0.1,
+            "slope": CONDITIONS["slope"] - 1,
+            "precipitation": CONDITIONS["precipitation"] - 1,
+            "soil_moisture": CONDITIONS["moisture"] - 0.1,
             "world_cover": WORLD_COVER_ESA_CODES["Tree Cover"],
         },
         "invalid": {

@@ -289,7 +289,7 @@ def get_map_point_data(lat: float, lon: float, periods: dict) -> dict:
             periods["precipitation"]["end_date"],
         ),
         "soil_organic_carbon": get_soil_organic_carbon_point(lat, lon),
-        "world_cover": get_world_cover_point(lat, lon),
+        "world_cover_code": get_world_cover_point(lat, lon),
         "address": get_address_from_point(lat, lon),
         "lat": lat,
         "lon": lon,
@@ -299,6 +299,6 @@ def get_map_point_data(lat: float, lon: float, periods: dict) -> dict:
         data["slope"],
         data["precipitation"],
         data["soil_moisture"],
-        data["world_cover"],
+        data["world_cover_code"],
     )
     return data

@@ -181,31 +181,11 @@ def display_map_point_info(data: dict):
     Display the information for the clicked point on the map as a separate success or error message.
     """
     try:
-        # Text formatting
-        (
-            lat_rounded,
-            lon_rounded,
-            elevation_sanitized,
-            afforestation_yes_no,
-            slope_rounded,
-            precipitation_rounded,
-            soil_moisture_rounded,
-            soil_carbon_sanitized,
-            world_cover,
-        ) = map_point_text_format(data)
+        address = data["address"]
 
-        # Text display
-        result = f"""
-        Latitude: {lat_rounded} | Longitude: {lon_rounded}\n
-        Address: {data['address']}\n
-        Afforestation Candidate: **{afforestation_yes_no}**\n
-        Elevation: {elevation_sanitized} meters,
-        Slope: {slope_rounded}°,
-        Rainy Season Root Zone Soil Moisture: {soil_moisture_rounded} %,
-        Yearly Precipitation: {precipitation_rounded} mm,
-        Soil Organic Carbon: {soil_carbon_sanitized} g/kg,
-        World Cover: {world_cover}
-        """
+        formatted_values = format_map_point_values(data)
+
+        result = format_map_point_output(formatted_values, address)
 
         if data["afforestation_validation"]:
             st.success(result)
@@ -219,12 +199,12 @@ def display_map_point_info(data: dict):
         ) from e
 
 
-def map_point_text_format(data: dict) -> tuple:
+def format_map_point_values(data: dict) -> dict:
     """
     Format the map point information for display.
 
     Returns:
-        Tuple containing the formatted text for the map point
+        dict: The formatted map point
     """
 
     soil_carbon, elevation, soil_moisture, precipitation, slope = (
@@ -248,8 +228,8 @@ def map_point_text_format(data: dict) -> tuple:
         round(data["soil_moisture"] * 100, 2) if soil_moisture != -1 else no_data
     )
 
-    world_cover_code = data["world_cover"]
-    world_cover = next(
+    world_cover_code = data["world_cover_code"]
+    world_cover_name = next(
         (
             "**" + name + "**"
             for name, code in WORLD_COVER_ESA_CODES.items()
@@ -258,17 +238,44 @@ def map_point_text_format(data: dict) -> tuple:
         "Unknown cover",
     )
 
-    return (
-        lat_rounded,
-        lon_rounded,
-        elevation_sanitized,
-        afforestation_yes_no,
-        slope_rounded,
-        precipitation_rounded,
-        soil_moisture_rounded,
-        soil_carbon_sanitized,
-        world_cover,
-    )
+    formatted_values = {
+        "lat_rounded": lat_rounded,
+        "lon_rounded": lon_rounded,
+        "elevation_sanitized": elevation_sanitized,
+        "afforestation_yes_no": afforestation_yes_no,
+        "slope_rounded": slope_rounded,
+        "precipitation_rounded": precipitation_rounded,
+        "soil_moisture_rounded": soil_moisture_rounded,
+        "soil_carbon_sanitized": soil_carbon_sanitized,
+        "world_cover_name": world_cover_name,
+    }
+
+    return formatted_values
+
+
+def format_map_point_output(formatted_values: dict, address: str) -> str:
+    """
+    Format the map point information for display.
+
+    Returns:
+        str: The formatted map point information
+    """
+
+    _v = formatted_values
+
+    output_test = f"""
+        Latitude: {_v['lat_rounded']} | Longitude: {_v['lon_rounded']}\n
+        Address: {address}\n
+        Afforestation Candidate: **{_v['afforestation_yes_no']}**\n
+        Elevation: {_v['elevation_sanitized']} meters,
+        Slope: {_v['slope_rounded']}°,
+        Rainy Season Root Zone Soil Moisture: {_v['soil_moisture_rounded']} %,
+        Yearly Precipitation: {_v['precipitation_rounded']} mm,
+        Soil Organic Carbon: {_v['soil_carbon_sanitized']} g/kg,
+        World Cover: {_v['world_cover_name']}
+        """
+
+    return output_test
 
 
 def display_coordinate_input_panel():
