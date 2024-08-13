@@ -127,6 +127,7 @@ def generate_legend_html(map_legends: dict) -> str:
     legend_entries = generate_legend_entries(map_legends)
 
     legend_html = generate_scrollable_legend(legend_entries)
+
     return legend_html
 
 
@@ -138,8 +139,9 @@ def generate_scrollable_legend(legend_entries: str) -> str:
         str: HTML string for the scrollable legend
     """
 
-    legend_html = "<div class='scrollable-legend'>" + legend_entries + "</div>"
-    return legend_html
+    legend_scrollable = "<div class='scrollable-legend'>" + legend_entries + "</div>"
+
+    return legend_scrollable
 
 
 def generate_legend_entries(map_legends: dict) -> str:
@@ -151,6 +153,7 @@ def generate_legend_entries(map_legends: dict) -> str:
     """
 
     legend_entries = ""
+
     for key, info in reversed(list(map_legends.items())):
         if "legend" in info:
             legend_entries += f"""
@@ -166,6 +169,7 @@ def generate_legend_entries(map_legends: dict) -> str:
                         </div>
                 """
             legend_entries += "</div></div>"
+
     return legend_entries
 
 
