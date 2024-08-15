@@ -259,7 +259,8 @@ def get_address_from_point(lat: float, lon: float) -> str:
         return f"Network error during geocoding: {str(e)}"
 
 
-# @st.cache_data
+# DO NOT @st.cache_data
+# Cashing disrupts the state management of the streamlit app
 @handle_ee_operations
 def get_map_point_data(lat: float, lon: float, periods: dict) -> dict:
     """

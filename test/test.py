@@ -8,6 +8,7 @@ import sys
 import time
 import random
 import subprocess
+import re
 
 # Third party
 from cryptography.hazmat.primitives import serialization
@@ -16,9 +17,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.remote.webelement import WebElement
 
 # To avoid overloading the server
 SERVER_PAUSE = random.uniform(0.5, 1.0)
@@ -70,7 +72,8 @@ from app.stages.data_categorization import (
     evaluate_afforestation_candidates,
 )
 from app.stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
-from app.stages.visualization import display_map, display_map_point_info
+from app.stages.visualization import generate_legend_html
+from app.config import MAP_DATA
 
 
 def check_internet_connection():
@@ -509,7 +512,12 @@ class TestUIComponents(unittest.TestCase):
     selectors = {
         "title": "//div[contains(@class, 'stMarkdown') and contains(., 'Afforestation Tracker 🗺️🌴')]",
         "subtitle": "//div[contains(@class, 'stMarkdown') and contains(., 'Click on the map to view data for a specific point 👆')]",
-        "map": "//div[contains(@class, 'stDeckGlJsonChart')]",
+        "map": "//iframe[contains(@src, 'streamlit_folium') and @title='streamlit_folium.st_folium']",
+        "coords_input_panel": {
+            "latitude": "//div[@data-testid='stAppViewBlockContainer']//div[@data-testid='stNumberInput'][contains(., 'Longitude')]",
+            "longitude": "//div[@data-testid='stAppViewBlockContainer']//div[@data-testid='stNumberInput'][contains(., 'Longitude')]",
+        },
+        "map_legend": generate_legend_html(MAP_DATA),
     }
 
     @classmethod
@@ -519,8 +527,17 @@ class TestUIComponents(unittest.TestCase):
         app_path = os.path.join(
             os.path.dirname(__file__), "..", "app", "streamlit_app.py"
         )
+        port = "8501"
         cls.streamlit_process = subprocess.Popen(
-            ["streamlit", "run", app_path, "--server.headless", "true"]
+            [
+                "streamlit",
+                "run",
+                app_path,
+                "--server.headless",
+                "true",
+                "--server.port",
+                port,
+            ]
         )
 
         # Allow some time for the app to start
@@ -533,25 +550,27 @@ class TestUIComponents(unittest.TestCase):
         options.add_argument("--disable-gpu")
         cls.driver = webdriver.Chrome(options=options)
 
-        cls.driver.get("http://localhost:8501")
+        cls.driver.get(f"http://localhost:{port}")
+
+        # wait until "map" is loaded
+        time.sleep(30)
+
+        cls.driver.refresh()
 
         time.sleep(40)
 
-        # Refresh the page to be assured that the app is loaded correctly
-        cls.driver.refresh()
         print("Page refreshed")
-
-        # Wait for reload
-        time.sleep(30)
-
-        # Set up the wait
-        cls.driver_wait = WebDriverWait(cls.driver, 10)
 
     @classmethod
     def tearDownClass(cls):
         # Close the browser and terminate the Streamlit app process
         cls.driver.quit()
         cls.streamlit_process.terminate()
+
+    def await_element(self, element: str, timeout=10) -> WebElement:
+        return WebDriverWait(self.driver, timeout).until(
+            EC.presence_of_element_located((By.XPATH, element))
+        )
 
     def test_title_exists(self):
         """Test if the title element exists."""
@@ -572,6 +591,89 @@ class TestUIComponents(unittest.TestCase):
             self.assertTrue(self.driver.find_element(By.XPATH, subtitle))
         except NoSuchElementException:
             self.fail("Subtitle element does not exist.")
+
+    def test_map_exists(self):
+        """Test if the map element exists."""
+
+        _map = self.selectors["map"]
+
+        try:
+            self.assertTrue(self.await_element(_map))
+        except NoSuchElementException:
+            self.fail("Map element does not exist.")
+
+    def test_map_point_info_exists(self):
+        """Test if the map point information is displayed."""
+
+        page_content = self.driver.page_source
+
+        missing_details = self._find_missing_map_point_details(page_content)
+
+        self.assertEqual(
+            missing_details, {}, f"Map point information is missing:\n{missing_details}"
+        )
+
+    def _find_missing_map_point_details(self, output_text: str):
+        # Regex patterns to extract information
+        patterns = {
+            "latitude": r"Latitude: ([\d.]+)",
+            "longitude": r"Longitude: ([\d.]+)",
+            "address": r"Address: (.+)",
+            "afforestation_candidate": r"Afforestation Candidate: .*(Yes|No)",
+            "elevation": r"Elevation: ([\d.]+) meters",
+            "slope": r"Slope: ([\d.]+)°",
+            "soil_moisture": r"Rainy Season Root Zone Soil Moisture: ([\d.]+) %",
+            "yearly_precipitation": r"Yearly Precipitation: ([\d.]+) mm",
+            "soil_organic_carbon": r"Soil Organic Carbon: ([\d.]+) g/kg",
+            "world_cover": r"World Cover: (.+)",
+        }
+
+        # Extract data from the output text
+        extracted_data = {}
+
+        for key, pattern in patterns.items():
+            match = re.search(pattern, output_text, re.MULTILINE)
+            if match:
+                extracted_data[key] = match.group(1)
+            else:
+                extracted_data[key] = (
+                    None  # or 'Not found', based on your error handling preference
+                )
+
+        # Find missing data
+        missing_data = {}
+
+        for key, data in extracted_data.items():
+            if data is None:
+                missing_data[key] = data
+
+        return missing_data
+
+    def test_coords_input_pane_exists(self):
+        """Test if the coordinate input panel is displayed."""
+
+        coords_input_panel = self.selectors["coords_input_panel"]
+
+        try:
+            self.assertTrue(self.await_element(coords_input_panel["latitude"]))
+            self.assertTrue(self.await_element(coords_input_panel["longitude"]))
+
+        except NoSuchElementException:
+            self.fail("Coordinate input panel does not exist.")
+
+    def test_map_legend_exists(self):
+        """Test if the map legend is displayed."""
+
+        map_legend = self.selectors["map_legend"]
+
+        page_content = self.driver.page_source
+
+        try:
+            self.assertTrue(map_legend in page_content)
+
+        except NoSuchElementException:
+
+            self.fail("Map legend does not exist.")
 
 
 if __name__ == "__main__":

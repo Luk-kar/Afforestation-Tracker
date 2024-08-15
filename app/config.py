@@ -7,6 +7,8 @@ configuration for the data acquisition, data processing, and data visualization
 stages.
 """
 
+# NOTE Use const from outer scope only to static UI elements!!!
+# Otherwise, the statemenegemt will be disrupted by the Streamlit API
 UI_STRINGS = {
     "title": "Afforestation Tracker 🗺️🌴",
     "subtitle": "Click on the map to view data for a specific point 👆",

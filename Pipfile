@@ -14,6 +14,7 @@ pylint = "*"
 vulture = "*"
 cryptography = "*"
 selenium = "*"
+lxml = "*"
 
 [requires]
 python_version = "3.10"

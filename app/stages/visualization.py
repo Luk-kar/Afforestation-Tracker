@@ -40,7 +40,7 @@ def add_layer_to_map(gee_map: geemap.Map, layer: dict):
         raise RuntimeError(f"Failed to add layer to map: {e}") from e
 
 
-def generate_legend(map_legends: dict) -> str:
+def generate_legend(map_data: dict) -> str:
     """
     Generate HTML for the map legend using the provided legend data.
 
@@ -87,7 +87,7 @@ def generate_legend(map_legends: dict) -> str:
     </style>
     """
 
-    legend_html = generate_legend_html(map_legends)
+    legend_html = generate_legend_html(map_data)
 
     dragging_script = """
     <script>
@@ -304,7 +304,7 @@ def format_map_point_output(formatted_values: dict, address: str) -> str:
 
     _v = formatted_values
 
-    output_test = f"""
+    output_text = f"""
         Latitude: {_v['lat_rounded']} | Longitude: {_v['lon_rounded']}\n
         Address: {address}\n
         Afforestation Candidate: **{_v['afforestation_yes_no']}**\n
@@ -316,7 +316,7 @@ def format_map_point_output(formatted_values: dict, address: str) -> str:
         World Cover: {_v['world_cover_name']}
         """
 
-    return output_test
+    return output_text
 
 
 def display_coordinate_input_panel():

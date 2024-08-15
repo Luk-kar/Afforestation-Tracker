@@ -60,7 +60,7 @@ def streamlit_app():
     # https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state
     display_coordinate_input_panel()
 
-    display_legend(regions_data)
+    display_legend(MAP_DATA)
 
 
 def setup_latitude_longitude_session():
@@ -108,10 +108,10 @@ def update_latitude_longitude_session(map_result: dict):
         st.session_state["longitude"] = last_click_lng
 
 
-def display_legend(regions_data: dict):
+def display_legend(map_data: dict):
     """Display the map legend."""
     try:
-        display_map_legend(regions_data["maps"])
+        display_map_legend(map_data)
     except RuntimeError as e:
         error = "Failed to display map legend"
         report_error(error, e)

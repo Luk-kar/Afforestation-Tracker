@@ -5,7 +5,6 @@ for a specified region of interest.
 
 # Third party
 import ee
-import streamlit as st
 
 # Local
 from stages.data_acquisition.gee_server import (
@@ -260,7 +259,8 @@ def get_satellite_imagery_region(roi_coords: Roi_Coords) -> dict:
     return fetch_satellite_imagery_data(roi)
 
 
-@st.cache_data
+# DO NOT @st.cache_data
+# Cashing disrupts the state management of the streamlit app
 @handle_ee_operations
 def get_region_data(roi: dict, map_data: dict) -> dict:
     """
