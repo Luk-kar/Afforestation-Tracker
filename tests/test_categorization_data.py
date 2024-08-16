@@ -1,3 +1,7 @@
+"""
+This module contains test cases for evaluating and fetching afforestation candidates for a specific region.
+"""
+
 # Python
 import time
 from typing import List

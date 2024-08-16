@@ -1,3 +1,7 @@
+"""
+The server module test the user elements interface of the app.
+"""
+
 # Python
 import os
 import re

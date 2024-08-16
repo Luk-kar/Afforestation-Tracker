@@ -1,3 +1,7 @@
+"""
+The module contains the tests for the connection to Google Earth Engine.
+"""
+
 # Python
 import json
 import os

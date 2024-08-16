@@ -1,3 +1,7 @@
+"""
+The server module provides functionality for managing server operations and configurations.
+"""
+
 # Python
 import random
 

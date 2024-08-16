@@ -1,4 +1,8 @@
-# Python
+"""
+The module tests the data acquisition stage of the app.
+"""
+
+#  Python
 import unittest
 import time
 from typing import List, Tuple

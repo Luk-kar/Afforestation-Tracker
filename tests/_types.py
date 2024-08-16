@@ -1,3 +1,7 @@
+"""
+This module defines the types used in the test.
+"""
+
 # Python
 from typing import Dict, Literal, TypedDict
 
