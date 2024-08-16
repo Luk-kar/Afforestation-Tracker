@@ -12,9 +12,11 @@ import requests
 
 
 def check_internet_connection():
+    """Checks if an internet connection is available."""
+
     try:
         # Change if google is blocked in your country
-        requests.get("https://www.google.com")
+        requests.get("https://www.google.com", timeout=10)
     except requests.ConnectionError:
         print("No internet connection available. Aborting tests.")
         sys.exit()

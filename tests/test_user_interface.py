@@ -14,16 +14,16 @@ from tests._server import PAUSE
 from tests._setup import BaseTestCase
 
 # Third party
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
 
 # App
-from app.stages.visualization import generate_legend_html
 from app.config import MAP_DATA
+from app.stages.visualization import generate_legend_html
 
 
 COORDS_INPUT_XPATH = (
@@ -33,6 +33,7 @@ COORDS_INPUT_XPATH = (
 
 # Test UI components
 class TestUIComponents(BaseTestCase):
+    """Test the user interface components of the Streamlit app."""
 
     selectors = {
         "title": "//div[contains(@class, 'stMarkdown') and contains(., 'Afforestation Tracker 🗺️🌴')]",
@@ -55,6 +56,7 @@ class TestUIComponents(BaseTestCase):
             os.path.dirname(__file__), "..", "app", "streamlit_app.py"
         )
         port = "8501"
+        # Pylint: disable=R1732
         cls.streamlit_process = subprocess.Popen(
             [
                 "streamlit",
@@ -71,7 +73,7 @@ class TestUIComponents(BaseTestCase):
         print("Waiting for the Streamlit app to start...")
         wait_server = PAUSE["long"]
         print(wait_server)
-        for i in range(wait_server).__reversed__():
+        for i in reversed(range(wait_server)):
             time.sleep(1)
             print(i)
         print("Starting the test")
@@ -96,7 +98,8 @@ class TestUIComponents(BaseTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # Close the browser and terminate the Streamlit app process
+        """Close the browser and terminate the Streamlit app process"""
+
         cls.driver.quit()
         cls.streamlit_process.terminate()
 

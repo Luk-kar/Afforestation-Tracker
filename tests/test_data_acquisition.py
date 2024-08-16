@@ -3,6 +3,7 @@ The module tests the data acquisition stage of the app.
 """
 
 #  Python
+from contextlib import contextmanager
 import unittest
 import time
 from typing import List, Tuple
@@ -14,6 +15,7 @@ from tests._setup import BaseTestCase
 
 # Third party
 import ee
+import requests
 
 # App
 from app.stages.server_connection import establish_connection
@@ -41,6 +43,7 @@ from app.config import ROI
 
 
 class TestMapDataCollections(BaseTestCase):
+    """Test the map data collections on Google Earth Engine."""
 
     collections = GEE_MAP_COLLECTIONS
 
@@ -80,13 +83,22 @@ class TestMapDataCollections(BaseTestCase):
             try:
                 ee.ImageCollection(collection_id)
 
-            except Exception as e:
+            except ee.EEException as e:  # Specific to Earth Engine errors
                 self.fail(
                     f"Collection '{collection_name}' with ID '{collection_id}' not found on Google Earth Engine: {str(e)}"
+                )
+            except ConnectionError as e:  # Handles possible connection issues
+                self.fail(
+                    f"Connection error while accessing collection '{collection_name}' with ID '{collection_id}': {str(e)}"
+                )
+            except TimeoutError as e:  # Handles possible timeout issues
+                self.fail(
+                    f"Timeout occurred while accessing collection '{collection_name}' with ID '{collection_id}': {str(e)}"
                 )
 
 
 class TestGetPointData(unittest.TestCase):
+    """Test the fetching of point data from Google Earth Engine."""
 
     sahel_region: List[str] = ROI["roi_coords"]
 
@@ -106,9 +118,22 @@ class TestGetPointData(unittest.TestCase):
         establish_connection()
 
     def setUp(self):
-        """Await the connection to Google Earth Engine before each test to not overload the server."""
+        """Await connection to Google Earth Engine before each test to not overload the server."""
 
         time.sleep(PAUSE["short"])
+
+    @contextmanager
+    def _handle_specific_exceptions(self, action_description):
+        """Handle specific exceptions that may occur during the test."""
+
+        try:
+            yield
+        except ee.EEException as e:
+            self.fail(f"Earth Engine error when {action_description}: {str(e)}")
+        except (ConnectionError, TimeoutError) as e:
+            self.fail(f"Network error when {action_description}: {str(e)}")
+        except Exception as e:
+            self.fail(f"Unexpected error when {action_description}: {str(e)}")
 
     def test_get_rootzone_soil_moisture_point(self):
         """Test that the rootzone soil moisture data is fetched successfully."""
@@ -116,10 +141,10 @@ class TestGetPointData(unittest.TestCase):
         coords = self.coords
         period = self.soil_moisture_period
 
-        try:
-            get_rootzone_soil_moisture_point(*coords, *period)
-        except Exception as e:
-            self.fail(f"Failed to fetch rootzone soil moisture data: {str(e)}")
+        with self._handle_specific_exceptions("fetching rootzone soil moisture data"):
+            soil_moisture_value = get_rootzone_soil_moisture_point(*coords, *period)
+            self.assertIsNotNone(soil_moisture_value)
+            self.assertIsInstance(soil_moisture_value, (float, int))
 
     def test_get_precipitation_point(self):
         """Test that the precipitation data is fetched successfully."""
@@ -127,50 +152,50 @@ class TestGetPointData(unittest.TestCase):
         coords = self.coords
         period = self.precipitation_period
 
-        try:
-            get_precipitation_point(*coords, *period)
-        except Exception as e:
-            self.fail(f"Failed to fetch precipitation data: {str(e)}")
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            precipitation_value = get_precipitation_point(*coords, *period)
+            self.assertIsNotNone(precipitation_value)
+            self.assertIsInstance(precipitation_value, (float, int))
 
     def test_get_soil_organic_carbon_point(self):
         """Test that the soil organic carbon data is fetched successfully."""
 
         coords = self.coords
 
-        try:
-            get_soil_organic_carbon_point(*coords)
-        except Exception as e:
-            self.fail(f"Failed to fetch soil organic carbon data: {str(e)}")
+        with self._handle_specific_exceptions("fetching soil organic carbon data"):
+            soil_organic_carbon_value = get_soil_organic_carbon_point(*coords)
+            self.assertIsNotNone(soil_organic_carbon_value)
+            self.assertIsInstance(soil_organic_carbon_value, (float, int))
 
     def test_get_elevation_point(self):
         """Test that the elevation data is fetched successfully."""
 
         coords = self.coords
 
-        try:
-            get_elevation_point(*coords)
-        except Exception as e:
-            self.fail(f"Failed to fetch elevation data: {str(e)}")
+        with self._handle_specific_exceptions("fetching elevation data"):
+            elevation_value = get_elevation_point(*coords)
+            self.assertIsNotNone(elevation_value)
+            self.assertIsInstance(elevation_value, (float, int))
 
     def test_get_slope_point(self):
         """Test that the slope data is fetched successfully."""
 
         coords = self.coords
 
-        try:
-            get_slope_point(*coords)
-        except Exception as e:
-            self.fail(f"Failed to fetch slope data: {str(e)}")
+        with self._handle_specific_exceptions("fetching slope data"):
+            slope_value = get_slope_point(*coords)
+            self.assertIsNotNone(slope_value)
+            self.assertIsInstance(slope_value, (float, int))
 
     def test_get_world_cover_point(self):
         """Test that the world cover data is fetched successfully."""
 
         coords = self.coords
 
-        try:
-            get_world_cover_point(*coords)
-        except Exception as e:
-            self.fail(f"Failed to fetch world cover data: {str(e)}")
+        with self._handle_specific_exceptions("fetching world cover data"):
+            world_cover = get_world_cover_point(*coords)
+            self.assertIsNotNone(world_cover)
+            self.assertIsInstance(world_cover, (str, int))
 
     def test_get_address_from_point(self):
         """
@@ -183,12 +208,26 @@ class TestGetPointData(unittest.TestCase):
         coords = self.coords
 
         try:
-            get_address_from_point(*coords)
+            address = get_address_from_point(*coords)
+            self.assertNotEqual(
+                address, "No address found.", "No address was returned."
+            )
+            self.assertIsInstance(address, str, "The returned address is not a string.")
+
+        except requests.exceptions.HTTPError as e:
+            self.fail(f"HTTP error occurred while fetching address: {str(e)}")
+        except requests.exceptions.ConnectionError as e:
+            self.fail(f"Connection error occurred while fetching address: {str(e)}")
+        except requests.exceptions.Timeout as e:
+            self.fail(f"Timeout occurred while fetching address: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            self.fail(f"Request exception occurred: {str(e)}")
         except Exception as e:
-            self.fail(f"Failed to fetch address from coordinates: {str(e)}")
+            self.fail(f"An unexpected error occurred: {str(e)}")
 
 
 class TestRegionData(unittest.TestCase):
+    """Test the region data acquisition from Google Earth Engine."""
 
     sahel_region: List[str] = ROI["roi_coords"]
 
@@ -204,9 +243,22 @@ class TestRegionData(unittest.TestCase):
         establish_connection()
 
     def setUp(self):
-        """Await the connection to Google Earth Engine before each test to not overload the server."""
+        """Await connection to Google Earth Engine before each test to not overload the server."""
 
         time.sleep(PAUSE["short"])
+
+    @contextmanager
+    def _handle_specific_exceptions(self, action_description):
+        """Handle specific exceptions that may occur during the test."""
+
+        try:
+            yield
+        except ee.EEException as e:
+            self.fail(f"Earth Engine error when {action_description}: {str(e)}")
+        except (ConnectionError, TimeoutError) as e:
+            self.fail(f"Network error when {action_description}: {str(e)}")
+        except Exception as e:
+            self.fail(f"Unexpected error when {action_description}: {str(e)}")
 
     def test_get_rootzone_soil_moisture_region(self):
         """Test that the rootzone soil moisture data is fetched successfully for the region."""
@@ -214,12 +266,10 @@ class TestRegionData(unittest.TestCase):
         region = self.sahel_region
         period = self.soil_moisture_period
 
-        try:
-            get_rootzone_soil_moisture_region(region, *period)
-        except Exception as e:
-            self.fail(
-                f"Failed to fetch rootzone soil moisture data for the region: {str(e)}"
-            )
+        with self._handle_specific_exceptions("fetching rootzone soil moisture data"):
+            image = get_rootzone_soil_moisture_region(region, *period)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_precipitation_region(self):
         """Test that the precipitation data is fetched successfully for the region."""
@@ -227,61 +277,57 @@ class TestRegionData(unittest.TestCase):
         region = self.sahel_region
         period = self.precipitation_period
 
-        try:
-            get_precipitation_region(region, *period)
-        except Exception as e:
-            self.fail(f"Failed to fetch precipitation data for the region: {str(e)}")
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            image = get_precipitation_region(region, *period)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_soil_organic_carbon_region(self):
         """Test that the soil organic carbon data is fetched successfully for the region."""
 
         region = self.sahel_region
 
-        try:
-            get_soil_organic_carbon_region(region)
-        except Exception as e:
-            self.fail(
-                f"Failed to fetch soil organic carbon data for the region: {str(e)}"
-            )
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            image = get_soil_organic_carbon_region(region)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_elevation_region(self):
         """Test that the elevation data is fetched successfully for the region."""
 
         region = self.sahel_region
 
-        try:
-            get_elevation_region(region)
-        except Exception as e:
-            self.fail(f"Failed to fetch elevation data for the region: {str(e)}")
+        with self._handle_specific_exceptions("fetching elevation data"):
+            image = get_elevation_region(region)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_slope_region(self):
         """Test that the slope data is fetched successfully for the region."""
 
         region = self.sahel_region
 
-        try:
-            get_slope_region(region)
-        except Exception as e:
-            self.fail(f"Failed to fetch slope data for the region: {str(e)}")
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            image = get_slope_region(region)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_world_cover_region(self):
         """Test that the world cover data is fetched successfully for the region."""
 
         region = self.sahel_region
 
-        try:
-            get_world_cover_region(region)
-        except Exception as e:
-            self.fail(f"Failed to fetch world cover data for the region: {str(e)}")
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            image = get_world_cover_region(region)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)
 
     def test_get_satellite_imagery_region(self):
         """Test that the satellite imagery data is fetched successfully for the region."""
 
         region = self.sahel_region
 
-        try:
-            get_satellite_imagery_region(region)
-        except Exception as e:
-            self.fail(
-                f"Failed to fetch satellite imagery data for the region: {str(e)}"
-            )
+        with self._handle_specific_exceptions("fetching precipitation data"):
+            image = get_satellite_imagery_region(region)
+            self.assertIsNotNone(image)
+            self.assertIsInstance(image, ee.image.Image)

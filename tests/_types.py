@@ -7,6 +7,10 @@ from typing import Dict, Literal, TypedDict
 
 
 class Period(TypedDict):
+    """
+    Represents a period of time.
+    """
+
     start_date: str
     end_date: str
 

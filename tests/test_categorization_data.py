@@ -1,8 +1,10 @@
 """
-This module contains test cases for evaluating and fetching afforestation candidates for a specific region.
+This module contains test cases for evaluating 
+and fetching afforestation candidates for a specific region.
 """
 
 # Python
+from contextlib import contextmanager
 import time
 from typing import List
 
@@ -20,8 +22,15 @@ from app.stages.data_acquisition.region import get_afforestation_candidates_regi
 from app.stages.data_categorization import evaluate_afforestation_candidates
 from app.stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
+# Third-party
+import ee
+
 
 class TestCandidateForAfforestation(BaseTestCase):
+    """
+    Test cases for evaluating and fetching afforestation candidates
+    for a specific region or point
+    """
 
     sahel_region: List[str] = ROI["roi_coords"]
 
@@ -68,33 +77,45 @@ class TestCandidateForAfforestation(BaseTestCase):
         print("\nTesting evaluating afforestation candidates for the point and region:")
 
     def setUp(self):
-        """Await the connection to Google Earth Engine before each test to not overload the server."""
+        """
+        Await the connection to Google Earth Engine
+        before each test to not overload the server.
+        """
 
         time.sleep(PAUSE["short"])
+
+    @contextmanager
+    def _handle_specific_exceptions(self, action_description):
+        try:
+            yield
+        except ee.EEException as e:
+            self.fail(f"Earth Engine error while {action_description}: {str(e)}")
+        except ValueError as e:
+            self.fail(f"Value error in test data or inputs: {str(e)}")
+        except TypeError as e:
+            self.fail(f"Type error in inputs: {str(e)}")
+        except RuntimeError as e:
+            self.fail(f"Runtime error during {action_description}: {str(e)}")
 
     def test_evaluate_afforestation_candidates(self):
         """Test that the afforestation candidates are evaluated successfully for the region."""
 
         data = self.data
 
-        try:
+        with self._handle_specific_exceptions("evaluating afforestation candidates"):
+
             result = evaluate_afforestation_candidates(**data["true"])
             self.assertTrue(result)
-
-        except Exception as e:
-            self.fail(f"Failed to evaluate afforestation candidates: {str(e)}")
 
     def test_evaluate_afforestation_candidates_false(self):
         """Test that the afforestation candidates are evaluated successfully for the region."""
 
         data = self.data
 
-        try:
+        with self._handle_specific_exceptions("evaluating afforestation candidates"):
+
             result = evaluate_afforestation_candidates(**data["false"])
             self.assertFalse(result)
-
-        except Exception as e:
-            self.fail(f"Failed to evaluate afforestation candidates: {str(e)}")
 
     def test_get_afforestation_candidates_region(self):
         """Test that the afforestation candidates are fetched successfully for the region."""
@@ -105,7 +126,10 @@ class TestCandidateForAfforestation(BaseTestCase):
 
         try:
             get_afforestation_candidates_region(region, periods)
-        except Exception as e:
-            self.fail(
-                f"Failed to fetch afforestation candidates for the region: {str(e)}"
-            )
+
+        except ee.EEException as e:
+            self.fail(f"Earth Engine error while fetching candidates: {str(e)}")
+        except ValueError as e:
+            self.fail(f"Invalid ROI coordinates: {str(e)}")
+        except RuntimeError as e:
+            self.fail(f"Runtime error during fetching candidates: {str(e)}")

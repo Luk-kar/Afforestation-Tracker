@@ -21,6 +21,9 @@ from app.stages.server_connection import (
 
 
 class TestConnectionToGoogleEarthEngine(BaseTestCase):
+    """
+    Test the connection to Google Earth Engine.
+    """
 
     service_account: str
     private_key: str
@@ -51,7 +54,7 @@ class TestConnectionToGoogleEarthEngine(BaseTestCase):
         self.assertTrue(os.path.exists(private_key))
         self.assertTrue(private_key.endswith(".json"))
 
-        with open(private_key, "r") as f:
+        with open(private_key, "r", encoding="utf-8") as f:
             private_key_content = f.read()
 
         private_key_json = json.loads(private_key_content)
