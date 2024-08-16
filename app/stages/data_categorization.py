@@ -9,7 +9,7 @@ from typing import Union
 # Third party
 import ee
 
-# Local
+# App
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 
 

@@ -6,7 +6,7 @@ for a specified region of interest.
 # Third party
 import ee
 
-# Local
+# App
 from stages.data_acquisition.gee_server import (
     fetch_satellite_imagery_data,
     fetch_total_precipitation_data,

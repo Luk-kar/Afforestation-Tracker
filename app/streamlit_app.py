@@ -10,7 +10,7 @@ import logging
 import streamlit as st
 from streamlit_folium import st_folium
 
-# Local
+# App
 from stages.server_connection import establish_connection
 from stages.visualization import (
     display_text,

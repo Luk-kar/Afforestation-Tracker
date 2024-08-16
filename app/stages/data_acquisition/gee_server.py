@@ -5,7 +5,7 @@ This module contains functions to fetch data from Google Earth Engine (GEE) serv
 # Third party
 import ee
 
-# Local
+# App
 from _types import Date_Range
 from validation import handle_ee_operations
 from config import SIZE_SAMPLE_METERS, GEE_MAP_COLLECTIONS

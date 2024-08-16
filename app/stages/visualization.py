@@ -10,7 +10,7 @@ import geemap.foliumap as geemap
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Local
+# App
 from stages.data_acquisition.gee_server import WORLD_COVER_ESA_CODES
 from config import UI_STRINGS
 

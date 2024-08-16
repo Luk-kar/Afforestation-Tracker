@@ -5,7 +5,7 @@ This module contains functions to validate the input data.
 # Python
 from datetime import datetime
 
-# Local
+# App
 from _types import Roi_Coords
 
 # Third party

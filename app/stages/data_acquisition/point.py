@@ -6,7 +6,7 @@ This module contains functions to retrieve data for a specific point on the map.
 import requests
 import ee
 
-# Local
+# App
 from config import SIZE_SAMPLE_METERS
 from stages.data_acquisition.gee_server import (
     fetch_total_precipitation_data,
