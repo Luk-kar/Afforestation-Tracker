@@ -83,7 +83,7 @@ pipenv shell
 
 ## 🔧 Configuration
 
-The configuration for the application is located in the [app/config.py](app/config.py) file. This file centralizes the management of various settings, such as file paths and server settings. It also defines parameters for different data stages, including data acquisition, processing, and visualization:
+You can configure the application in the [app/config.py](app/config.py) file. This file centralizes the management of various settings, such as file paths and server settings. It also defines parameters for different data stages, including data acquisition, processing, and visualization:
 
 <details>
   <summary>Click me</summary>
@@ -110,8 +110,6 @@ The configuration for the application is located in the [app/config.py](app/conf
   
   3. **Afforestation Candidates:** Highlights suitable and non-suitable zones for planting with a simple red-green palette.
 
-  This setup streamlines the process of adjusting visual settings and managing data sources, ensuring that changes in the configuration file are automatically reflected across the app.
-
 </details>
 
 ---
@@ -121,12 +119,12 @@ The configuration for the application is located in the [app/config.py](app/conf
 
 ### 🌴 Afforestation Category Logic
 
-Details on how data is categorized for afforestation can be found in the: [`app/stages/data_categorization.py`](app/stages/data_categorization.py) file.
+You can find details on how the data is categorized for afforestation in the: [`app/stages/data_categorization.py`](app/stages/data_categorization.py) file.
 
 
 ## 🔨 Usage
 
-The app can be executed by running the `streamlit_app.py` script found within the `app` directory.
+You can execute the app by running the `app/streamlit_app.py` script.
 
 ```bash
 streamlit run app/streamlit_app.py
