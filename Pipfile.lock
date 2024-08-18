@@ -363,12 +363,12 @@
         },
         "geemap": {
             "hashes": [
-                "sha256:46cdae2689861750d27d300f06222cf27a6676638855b650232ac2dc0f05cdb4",
-                "sha256:97cf30703c3c0b361d29e7a03a2672c0fe5d5908d486235468fb599bc86143fd"
+                "sha256:c218fe1db74caa435011ae92dc3cda1a8cddc7ce6cd0d6fb9e0bf82141994233",
+                "sha256:dc8656fa5b334b4ffd69f4fb4074dc31f52101726e7bcf0b70a381756d29e527"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==0.33.1"
+            "version": "==0.34.0"
         },
         "geocoder": {
             "hashes": [
@@ -403,11 +403,11 @@
         },
         "google-api-python-client": {
             "hashes": [
-                "sha256:0bb973adccbe66a3d0a70abe4e49b3f2f004d849416bfec38d22b75649d389d8",
-                "sha256:aeb4bb99e9fdd241473da5ff35464a0658fea0db76fe89c0f8c77ecfc3813404"
+                "sha256:0f225b1f45d5a6f8c2a400f48729f5d6da9a81138e81e0478d61fdd8edf6563a",
+                "sha256:43c05322b91791204465291b3852718fae38d4f84b411d8be847c4f86882652a"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.140.0"
+            "version": "==2.141.0"
         },
         "google-auth": {
             "hashes": [
@@ -888,11 +888,11 @@
         },
         "narwhals": {
             "hashes": [
-                "sha256:841e2df1cf20dfc62e4fb1d939d1b7a37ff4292254086223372f93345228fffd",
-                "sha256:bca62a324bd1c63d6901de7e85c6e6bf7ac854ee1b5de9e4fcc9320f19160dca"
+                "sha256:b33348b1d187208227f404f1808713f434e401951b780a34719e4eade1fa5df5",
+                "sha256:cee6bb1255f63aa5ea9e268fcda58cb293235494c1dc7eb327d4beb253eaaebf"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==1.4.0"
+            "version": "==1.4.2"
         },
         "numpy": {
             "hashes": [
@@ -2021,11 +2021,11 @@
         },
         "tomlkit": {
             "hashes": [
-                "sha256:08ad192699734149f5b97b45f1f18dad7eb1b6d16bc72ad0c2335772650d7b72",
-                "sha256:7075d3042d03b80f603482d69bf0c8f345c2b30e41699fd8883227f89972b264"
+                "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde",
+                "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==0.13.0"
+            "version": "==0.13.2"
         },
         "trio": {
             "hashes": [

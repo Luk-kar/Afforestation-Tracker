@@ -6,8 +6,8 @@ name = "pypi"
 [packages]
 geemap = "*"
 streamlit = "*"
-streamlit-folium = "*"
 folium = "*"
+streamlit-folium = "*"
 
 [dev-packages]
 pylint = "*"

@@ -1,5 +1,8 @@
 """
 The server module test the user elements interface of the app.
+
+If you run the test too frequently, subsequent runs may fail due to the
+the google earth engine quota limit. The test could fail.
 """
 
 # Python
@@ -22,7 +25,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 
 # App
-from app.config import MAP_DATA
+from app.config import MAP_DATA, UI_STRINGS
 from app.stages.visualization import generate_legend_html
 
 
@@ -36,8 +39,8 @@ class TestUIComponents(BaseTestCase):
     """Test the user interface components of the Streamlit app."""
 
     selectors = {
-        "title": "//div[contains(@class, 'stMarkdown') and contains(., 'Afforestation Tracker 🗺️🌴')]",
-        "subtitle": "//div[contains(@class, 'stMarkdown') and contains(., 'Click on the map to view data for a specific point 👆')]",
+        "title": f"//div[contains(@class, 'stMarkdown') and contains(., '{UI_STRINGS['title']}')]",
+        "subtitle": f"//div[contains(@class, 'stMarkdown') and contains(., '{UI_STRINGS['subtitle']}')]",
         "map": "//iframe[contains(@src, 'streamlit_folium') and @title='streamlit_folium.st_folium']",
         "coords_input_panel": {
             "latitude": f"{COORDS_INPUT_XPATH}[contains(., 'Latitude')]",
