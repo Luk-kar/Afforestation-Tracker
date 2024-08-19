@@ -154,7 +154,7 @@ Insights include:
 
 1. **State management and caching**
 
-    in [`Streamlit v1.37.1`](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state) is often unstable, making it hard to update UI elements consistently, especially with the the external server's API calls. Bugs can occur silently, especially when UI or dynamic JavaScript elements don't show up. It's best to use these features sparingly.
+    in [`Streamlit v1.37.1`](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state) is often unstable, making it hard to update UI elements consistently, especially with the external server's API calls. Bugs can occur silently, especially when UI or dynamic JavaScript elements don't show up. It's best to use these features sparingly.
 
 2. **Backend Engine Alternatives:**
     For apps needing heavy API use and detailed state management, try using Dash or Flask over Streamlit. [`Dash`](https://dash.plotly.com/) and [`Flask`](https://flask.palletsprojects.com/en/3.0.x/) handle complex tasks better. See the differences [here](https://www.datarevenue.com/en-blog/data-dashboarding-streamlit-vs-dash-vs-shiny-vs-voila).
@@ -163,7 +163,7 @@ Insights include:
     To streamline development, test data transformations directly on [`Google Earth Engine`](https://code.earthengine.google.com/).
 
 4. **Use Data Sources Independent of Cloud Providers:**
-    Use independent data sources like [`NASA`](https://worldview.earthdata.nasa.gov/), [`UCSB`](https://www.library.ucsb.edu/geospatial/maps), [`iSDA`](https://www.isda-africa.com/isdasoil/), and [`ESA`](https://esa.maps.eox.at/), available freely or by subscription. This lessens reliance on Google Cloud Platform (`GCP`) and keeps data accessible if it goes down. Some data is also on `AWS` and other services.
+    Use independent data sources like [`NASA`](https://worldview.earthdata.nasa.gov/), [`UCSB`](https://www.library.ucsb.edu/geospatial/maps), [`iSDA`](https://www.isda-africa.com/isdasoil/), and [`ESA`](https://esa.maps.eox.at/), available freely or by subscription. This lessens reliance on the Google Cloud Platform (`GCP`) and keeps data accessible if it goes down. Some data can be also found on `AWS`.
 
 ## 🧩 Ideas for Further Growth
 
