@@ -135,7 +135,7 @@ Run the app with:
 streamlit run app/streamlit_app.py
 ```
 **🚨 Note**:
-Depends on external data, so loading times may vary. Keep your `GEE` private key updated.
+Depends on external data, so loading times may vary. Refresh the app if some elements fail to load.. Keep your `GEE` private key updated.
 
 
 ## ✅ Testing
