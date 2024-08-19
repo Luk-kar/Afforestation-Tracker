@@ -19,7 +19,7 @@ The system features an interactive map that allows users to explore different la
 
 Each type of data comes with a guide to help users understand it. By clicking on a map point, users can see detailed info about that place's tree-planting potential.
 
-The system gathers data from Google Earth Engine for environmental info and Nominatim for place names. It uses Streamlit for the web interface, with folium and geemap for maps, making it easy to use online.
+The system gathers data from `Google Earth Engine` for environmental info and `Nominatim` for place names. It uses `Streamlit` for the web interface, with `folium` and `geemap` for maps, making it easy to use online.
 
 This tool is useful for researchers and decision-makers involved in tree planting in the Sahel to help with managing land sustainably.
 
