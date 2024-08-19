@@ -8,14 +8,14 @@ This project is inspired by the UN's [**Great Green Wall**](https://en.wikipedia
 The **Afforestation Tracker** is an online tool that tracks and studies areas in the Sahel region for planting trees. It uses geographic data from different sources to assess the environment and find the best locations for planting.
 
 The system features an interactive map that allows users to explore different layers like:
-1. Areas good for planting trees
-1. Ground wetness
-1. Rainfall levels
-1. Soil carbon content
-1. Vegetation types
-1. Ground slope
-1. Height above sea level
-1. Satellite photos
+1. **Areas good for planting trees**
+1. **Ground wetness**
+1. **Rainfall levels**
+1. **Soil carbon content**
+1. **Vegetation types**
+1. **Ground slope**
+1. **Height above sea level**
+1. **Satellite photos**
 
 Each type of data comes with a guide to help users understand it. By clicking on a map point, users can see detailed info about that place's tree-planting potential.
 
