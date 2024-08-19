@@ -169,23 +169,23 @@ Insights include:
 
 1. Show the user's current location.
 
-2. Match plant types to planting regions on the map.
+2. Map plant species to their optimal planting regions
     <details>
     <summary>Click me</summary>
 
       ### Trees:
-      - **[Acacia senegal](https://en.wikipedia.org/wiki/Acacia_senegal)** (Gum Arabic Tree)
-      - **[Faidherbia albida](https://en.wikipedia.org/wiki/Faidherbia_albida)** (Apple-ring Acacia)
-      - **[Balanites aegyptiaca](https://en.wikipedia.org/wiki/Balanites_aegyptiaca)** (Desert Date)
-      - **[Parkia biglobosa](https://en.wikipedia.org/wiki/Parkia_biglobosa)** (African Locust Bean Tree)
-      - **[Adansonia digitata](https://en.wikipedia.org/wiki/Adansonia_digitata)** (Baobab)
+      - **[Acacia senegal](https://en.wikipedia.org/wiki/Acacia_senegal)** _(Gum Arabic Tree)_
+      - **[Faidherbia albida](https://en.wikipedia.org/wiki/Faidherbia_albida)** _(Apple-ring Acacia)_
+      - **[Balanites aegyptiaca](https://en.wikipedia.org/wiki/Balanites_aegyptiaca)** _(Desert Date)_
+      - **[Parkia biglobosa](https://en.wikipedia.org/wiki/Parkia_biglobosa)** _(African Locust Bean Tree)_
+      - **[Adansonia digitata](https://en.wikipedia.org/wiki/Adansonia_digitata)** _(Baobab)_
 
       ### Shrubs:
-      - **[Ziziphus mauritiana](https://en.wikipedia.org/wiki/Ziziphus_mauritiana)** (Jujube)
-      - **[Guiera senegalensis](https://en.wikipedia.org/wiki/Guiera_senegalensis)** (Guiera)
-      - **[Piliostigma reticulatum](https://en.wikipedia.org/wiki/Piliostigma_reticulatum)** (Camel’s Foot)
-      - **[Combretum micranthum](https://en.wikipedia.org/wiki/Combretum_micranthum)** (Kinkeliba)
-      - **[Leptadenia pyrotechnica](https://en.wikipedia.org/wiki/Leptadenia_pyrotechnica)** (Marakh)
+      - **[Ziziphus mauritiana](https://en.wikipedia.org/wiki/Ziziphus_mauritiana)** _(Jujube)_
+      - **[Guiera senegalensis](https://en.wikipedia.org/wiki/Guiera_senegalensis)** _(Guiera)_
+      - **[Piliostigma reticulatum](https://en.wikipedia.org/wiki/Piliostigma_reticulatum)** _(Camel’s Foot)_
+      - **[Combretum micranthum](https://en.wikipedia.org/wiki/Combretum_micranthum)** _(Kinkeliba)_
+      - **[Leptadenia pyrotechnica](https://en.wikipedia.org/wiki/Leptadenia_pyrotechnica)** _(Marakh)_
 
 
     </details>
