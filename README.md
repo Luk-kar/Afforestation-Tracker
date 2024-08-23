@@ -135,7 +135,7 @@ Run the app with:
 streamlit run app/streamlit_app.py
 ```
 **🚨 Note**:
-Depends on external data, so loading times may vary. Refresh the app if some elements fail to load.. Keep your `GEE` private key updated.
+Depends on external data, so loading times may vary. Refresh the app if some elements fail to load. Keep your `GEE` private key updated.
 
 
 ## ✅ Testing
@@ -152,7 +152,7 @@ python -m unittest discover
 
 Insights include:
 
-1. **State management and caching**
+1. **State management and caching:**
 
     in [`Streamlit v1.37.1`](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state) is often unstable, making it hard to update UI elements consistently, especially with the external server's API calls. Bugs can occur silently, especially when UI or dynamic JavaScript elements don't show up. It's best to use these features sparingly.
 
